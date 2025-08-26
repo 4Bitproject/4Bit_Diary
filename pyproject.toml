@@ -1,0 +1,39 @@
+[project]
+name = "4bit-diary"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aerich>=0.9.1",
+    "asyncpg>=0.30.0",
+    "black>=25.1.0",
+    "fastapi>=0.116.1",
+    "python-dotenv>=1.1.1",
+    "ruff>=0.12.10",
+    "tortoise-orm>=0.25.1",
+    "uvicorn[standard]>=0.35.0",
+]
+
+[tool.uv]
+# uv 관련 설정 (패키지 그룹 관리)
+dev-dependencies = [
+    "ruff",
+    "pytest",
+    "httpx",   # API 테스트용
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.10",
+]
+prod = [
+    "gunicorn>=23.0.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = ["E", "F", "I"]
+ignore = ["E501"]  # 줄 길이 제한 무시
