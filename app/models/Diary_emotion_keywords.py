@@ -1,6 +1,6 @@
 # main.py 또는 해당 Python 파일
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
