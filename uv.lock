@@ -14,6 +14,7 @@ dependencies = [
     { name = "pre-commit" },
     { name = "python-dotenv" },
     { name = "ruff" },
+    { name = "tortoise" },
     { name = "tortoise-orm" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -37,6 +38,7 @@ requires-dist = [
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "ruff", specifier = ">=0.12.10" },
+    { name = "tortoise", specifier = ">=0.1.1" },
     { name = "tortoise-orm", specifier = ">=0.25.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.35.0" },
 ]
@@ -126,6 +128,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/5f/0bf65511d4eeac3a1f41c54034a492515a707c6edbc642174ae79034d3ba/asyncpg-0.30.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:04ff0785ae7eed6cc138e73fc67b8e51d54ee7a3ce9b63666ce55a0bf095f7ba", size = 3662720, upload-time = "2024-10-20T00:30:04.501Z" },
     { url = "https://files.pythonhosted.org/packages/e7/31/1513d5a6412b98052c3ed9158d783b1e09d0910f51fbe0e05f56cc370bc4/asyncpg-0.30.0-cp313-cp313-win32.whl", hash = "sha256:ae374585f51c2b444510cdf3595b97ece4f233fde739aa14b50e0d64e8a7a590", size = 560404, upload-time = "2024-10-20T00:30:06.537Z" },
     { url = "https://files.pythonhosted.org/packages/c8/a4/cec76b3389c4c5ff66301cd100fe88c318563ec8a520e0b2e792b5b84972/asyncpg-0.30.0-cp313-cp313-win_amd64.whl", hash = "sha256:f59b430b8e27557c3fb9869222559f7417ced18688375825f8f12302c34e915e", size = 621623, upload-time = "2024-10-20T00:30:09.024Z" },
+]
+
+[[package]]
+name = "atlastk"
+version = "0.13.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/24/0a/05fb6abea27b2b8483328d5e4c8bbe16c5be1c2cb58946a478b79d744132/atlastk-0.13.5.tar.gz", hash = "sha256:1679045b090e1d411806a55a8bef26d6ca268c0ac31ad07dbd17052774316009", size = 19719, upload-time = "2025-05-27T12:51:23.519Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0d/e1/c8209555c5ff5e2f13c13aa18d1b46eec1618a7e5cc6ec2c548e88a18901/atlastk-0.13.5-py3-none-any.whl", hash = "sha256:70184097f424a70d83822d783d46c7579427c4a6e7227ec54099368fd1fb2750", size = 24933, upload-time = "2025-05-27T12:51:22.046Z" },
 ]
 
 [[package]]
@@ -555,6 +566,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/15/b9/cc3017f9a9c9b6e27c5106cc10cc7904653c3eec0729793aec10479dd669/starlette-0.47.3.tar.gz", hash = "sha256:6bc94f839cc176c4858894f1f8908f0ab79dfec1a6b8402f6da9be26ebea52e9", size = 2584144, upload-time = "2025-08-24T13:36:42.122Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ce/fd/901cfa59aaa5b30a99e16876f11abe38b59a1a2c51ffb3d7142bb6089069/starlette-0.47.3-py3-none-any.whl", hash = "sha256:89c0778ca62a76b826101e7c709e70680a1699ca7da6b44d38eb0a7e61fe4b51", size = 72991, upload-time = "2025-08-24T13:36:40.887Z" },
+]
+
+[[package]]
+name = "tortoise"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "atlastk" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8b/98/970d10bcc02eda8370c425dd6306526eec8b407aa83f13bb0ebe7da41012/tortoise-0.1.1.tar.gz", hash = "sha256:a4ebd69b152d266174b3b0f2a22e3fb8995101eb749d3114813a98f405ab10bb", size = 4114, upload-time = "2019-08-03T15:54:19.508Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/ef/b314819f12e48e7a99f07825d064b596d58cc4a0c3b75939d0d10fedf90d/tortoise-0.1.1-py3-none-any.whl", hash = "sha256:bcb58a56d6796cad0db330104450df2caf2ea9e98d844bb2906274bd15c12804", size = 5263, upload-time = "2019-08-03T15:54:17.909Z" },
 ]
 
 [[package]]
