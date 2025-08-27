@@ -10,7 +10,7 @@ class EmotionalState(enum.Enum):
     ANGRY = "분노"
 
 
-class Diarys(models.Model):
+class Diaries(models.Model):
     diary_id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="diaries")
     title = fields.CharField(max_length=30, null=False)
