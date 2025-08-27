@@ -7,6 +7,7 @@ from app.services.auth_service import AuthService
 router = APIRouter()
 auth_service = AuthService()
 
+
 @router.post("/register", response_model=UserResponse, status_code=201)
 async def register(user_data: UserCreate):
     try:
@@ -14,6 +15,7 @@ async def register(user_data: UserCreate):
         return user
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Email already registered")
+
 
 @router.post("/login")
 async def login(user_data: UserLogin):
@@ -23,6 +25,7 @@ async def login(user_data: UserLogin):
 
     # TODO: JWT 토큰 생성 및 반환 로직 추가
     return {"message": "Login successful"}
+
 
 @router.post("/logout")
 async def logout():

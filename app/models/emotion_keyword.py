@@ -13,23 +13,28 @@ class EmotionType(str, Enum):
     negative = "negative"
     neutral = "neutral"
 
+
 # 2. Pydantic 스키마 정의
 class EmotionKeywordBase(BaseModel):
     emotion_keyword: str
     emotion_type: EmotionType
 
+
 class EmotionKeywordCreate(EmotionKeywordBase):
     pass
+
 
 class EmotionKeywordUpdate(BaseModel):
     emotion_keyword: Optional[str] = None
     emotion_type: Optional[EmotionType] = None
+
 
 class EmotionKeywordResponse(EmotionKeywordBase):
     id: int
 
     class Config:
         from_attributes = True
+
 
 # 3. 모델 정의
 class EmotionKeyword(models.Model):
@@ -39,6 +44,7 @@ class EmotionKeyword(models.Model):
 
     class Meta:
         table = "emotion_keyword"
+
 
 # 4. lifespan 컨텍스트 관리자: DB 연결/해제 로직
 @asynccontextmanager
@@ -50,8 +56,10 @@ async def lifespan(app: FastAPI):
     await Tortoise.close_connections()
     print("DB 연결 종료")
 
+
 # 5. FastAPI 앱 인스턴스
 app = FastAPI(lifespan=lifespan)
+
 
 # 6. API 엔드포인트: Pydantic 스키마와 HTTPException 활용
 @app.post("/emotion-keywords/", response_model=EmotionKeywordResponse, status_code=201)
@@ -59,19 +67,24 @@ async def create_emotion_keyword(emotion_keyword: EmotionKeywordCreate):
     emotion_keyword_obj = await EmotionKeyword.create(**emotion_keyword.dict())
     return emotion_keyword_obj
 
+
 @app.get("/emotion-keywords/", response_model=List[EmotionKeywordResponse])
 async def get_emotion_keywords():
     keywords = await EmotionKeyword.all()
     return keywords
 
-@app.get("/emotion-keywords/type/{emotion_type}", response_model=List[EmotionKeywordResponse])
+
+@app.get(
+    "/emotion-keywords/type/{emotion_type}", response_model=List[EmotionKeywordResponse]
+)
 async def get_emotion_keywords_by_type(emotion_type: EmotionType):
     keywords = await EmotionKeyword.filter(emotion_type=emotion_type).all()
     return keywords
 
+
 @app.put("/emotion-keywords/{keyword_id}")
 async def update_emotion_keyword(
-        keyword_id: int, emotion_keyword: str, emotion_type: str
+    keyword_id: int, emotion_keyword: str, emotion_type: str
 ):
     if emotion_type not in ["positive", "negative", "neutral"]:
         return {"error": "emotion_type must be one of: positive, negative, neutral"}
