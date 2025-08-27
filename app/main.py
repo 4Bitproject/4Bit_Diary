@@ -7,7 +7,8 @@ from tortoise.exceptions import DBConnectionError
 
 from app.api.v1.auth import router as auth_router
 
-DATABASE_URL = "sqlite://db.sqlite3" # DB 주소는 그대로 유지
+DATABASE_URL = "sqlite://db.sqlite3"  # DB 주소는 그대로 유지
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,7 +20,9 @@ async def lifespan(app: FastAPI):
     while attempt < max_attempts:
         try:
             # 이 코드는 이전과 동일합니다.
-            await Tortoise.init(db_url=DATABASE_URL, modules={"models": ["app.models.user"]})
+            await Tortoise.init(
+                db_url=DATABASE_URL, modules={"models": ["app.models.user"]}
+            )
             await Tortoise.generate_schemas()
             print("DB 연결 및 스키마 생성 성공!")
             break
@@ -37,6 +40,7 @@ async def lifespan(app: FastAPI):
     # 'connections' 객체를 사용하지 않고, Tortoise 객체의 메서드를 사용합니다.
     await Tortoise.close_connections()
     print("DB 연결 종료.")
+
 
 app = FastAPI(lifespan=lifespan)
 
