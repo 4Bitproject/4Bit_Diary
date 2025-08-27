@@ -5,7 +5,7 @@ from tortoise.models import Model
 class User(Model):
     id = fields.IntField(pk=True)
     email = fields.CharField(max_length=255, unique=True)
-    password = fields.CharField(max_length=255)
+    password_hash = fields.CharField(max_length=255)
     nickname = fields.CharField(max_length=50)
     name = fields.CharField(max_length=50)
     phone_number = fields.CharField(max_length=20, null=True)
