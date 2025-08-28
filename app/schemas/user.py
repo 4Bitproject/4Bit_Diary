@@ -11,6 +11,7 @@ class UserIn(BaseModel):
     nickname: str
     name: str
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

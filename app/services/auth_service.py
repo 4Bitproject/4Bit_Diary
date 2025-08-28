@@ -86,7 +86,9 @@ async def update_user_profile_service(current_user_id: str, new_data: dict) -> d
             user.email = new_data["email"]
 
         if "password" in new_data:
-            user.password = hash_password(new_data["password"]) # 'user.password_hash'를 'user.password'로 변경
+            user.password = hash_password(
+                new_data["password"]
+            )  # 'user.password_hash'를 'user.password'로 변경
 
         await user.save()
         return {"message": "프로필이 성공적으로 업데이트되었습니다."}
