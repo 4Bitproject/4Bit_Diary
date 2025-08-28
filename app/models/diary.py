@@ -25,3 +25,12 @@ class Diary(models.Model):
 # Pydantic schemas
 Diary_Pydantic = pydantic_model_creator(Diary, name="Diary")
 DiaryIn_Pydantic = pydantic_model_creator(Diary, name="DiaryIn", exclude_readonly=True)
+
+
+class DiaryTag(models.Model):
+    diary = fields.ForeignKeyField("models.Diary", related_name="diary_tags")
+    tag = fields.ForeignKeyField("models.Tag", related_name="diary_tags")
+
+    class Meta:
+        table = "diary_tags"
+        unique_together = [("diary", "tag")]

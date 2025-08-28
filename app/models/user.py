@@ -5,7 +5,7 @@ from tortoise.models import Model
 class User(Model):
     id = fields.IntField(pk=True)
     email = fields.CharField(max_length=255, unique=True)
-    password_hash = fields.CharField(max_length=255)
+    password = fields.CharField(max_length=255)
     nickname = fields.CharField(max_length=50)
     name = fields.CharField(max_length=50)
     phone_number = fields.CharField(max_length=20, null=True)
@@ -18,6 +18,3 @@ class User(Model):
 
     def __str__(self):
         return f"{self.nickname}({self.name})"
-
-    class Meta:
-        table = "users"

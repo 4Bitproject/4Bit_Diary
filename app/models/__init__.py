@@ -1,6 +1,7 @@
-from .diaries import Diary, EmotionalState
+from .diary import Diary
 from .emotion_keyword import EmotionKeyword
 from .tag import Tag
+from .token_blacklist import TokenBlacklist
 from .user import User
 
 __all__ = [
@@ -8,4 +9,5 @@ __all__ = [
     "Diary",
     "Tag",
     "EmotionKeyword",
+    "TokenBlacklist",
 ]
