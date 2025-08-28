@@ -3,9 +3,10 @@
 from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
 
+from .api.v1 import auth, diary
+
 # from tortoise.connections import connections # 이 줄은 삭제합니다
 from .core.config import TORTOISE_ORM
-from .api.v1 import auth, diary
 
 app = FastAPI(title="4Bit_Diary API")
 
