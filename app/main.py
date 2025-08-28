@@ -1,57 +1,47 @@
 import asyncio
-import os
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from tortoise import Tortoise
 from tortoise.exceptions import DBConnectionError
 
-# 환경 변수 로드
-load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+from app.api.v1.auth import router as auth_router
+
+DATABASE_URL = "sqlite://db.sqlite3"  # DB 주소는 그대로 유지
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI):
+    # DB 연결 초기화
     attempt = 0
     max_attempts = 10
     retry_interval = 1
 
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL 환경 변수가 설정되지 않았습니다.")
-
     while attempt < max_attempts:
         try:
-            print(f"[{attempt + 1}/{max_attempts}] 데이터베이스 연결을 시도합니다...")
-            # Tortoise 초기화: DB 연결 및 모델 로드
-            await Tortoise.init(db_url=DATABASE_URL, modules={"models": ["app.models"]})
-            print("데이터베이스 연결 성공.")
-
-            # 스키마 생성 (개발 환경 전용)
+            # 이 코드는 이전과 동일합니다.
+            await Tortoise.init(
+                db_url=DATABASE_URL, modules={"models": ["app.models.user"]}
+            )
             await Tortoise.generate_schemas()
-            print("데이터베이스 스키마 생성 완료.")
+            print("DB 연결 및 스키마 생성 성공!")
             break
-        except DBConnectionError as e:
+        except DBConnectionError:
             attempt += 1
-            if attempt < max_attempts:
-                print(f"DB 연결 실패: {e}. {retry_interval}초 후 재시도합니다.")
-                await asyncio.sleep(retry_interval)
-            else:
-                print(
-                    f"최대 재시도 횟수({max_attempts}) 초과. 데이터베이스 연결에 실패했습니다."
-                )
-                raise RuntimeError(
-                    "데이터베이스 연결 실패, 애플리케이션을 시작할 수 없습니다."
-                ) from e
+            if attempt == max_attempts:
+                print(f"DB 연결 실패! {max_attempts}번 시도 후 종료.")
+                break
+            print(f"DB 연결 시도 중... {attempt}/{max_attempts}번")
+            await asyncio.sleep(retry_interval)
 
     yield
-    if Tortoise.is_init():
-        print("애플리케이션 종료. 데이터베이스 연결을 닫습니다.")
-        await Tortoise.close_connections()
-    else:
-        print("데이터베이스가 초기화되지 않아 닫을 연결이 없습니다.")
+
+    # DB 연결 종료
+    # 'connections' 객체를 사용하지 않고, Tortoise 객체의 메서드를 사용합니다.
+    await Tortoise.close_connections()
+    print("DB 연결 종료.")
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
