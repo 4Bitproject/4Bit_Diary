@@ -10,7 +10,7 @@ class EmotionalState(enum.Enum):
     ANGRY = "분노"
 
 
-class Diaries(models.Model):
+class Diary(models.Model):
     diary_id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="diaries")
     title = fields.CharField(max_length=30, null=False)
@@ -25,9 +25,3 @@ class Diaries(models.Model):
 
 
 class DiaryTag(models.Model):
-    diary = fields.ForeignKeyField("models.Diaries", related_name="diary_tags")
-    tag = fields.ForeignKeyField("models.Tag", related_name="diary_tags")
-
-    class Meta:
-        table = "diary_tags"
-        unique_together = [("diary", "tag")]
