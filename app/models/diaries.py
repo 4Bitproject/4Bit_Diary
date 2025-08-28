@@ -22,3 +22,12 @@ class Diaries(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class DiaryTag(models.Model):
+    diary = fields.ForeignKeyField("models.Diaries", related_name="diary_tags")
+    tag = fields.ForeignKeyField("models.Tag", related_name="diary_tags")
+
+    class Meta:
+        table = "diary_tags"
+        unique_together = [("diary", "tag")]
