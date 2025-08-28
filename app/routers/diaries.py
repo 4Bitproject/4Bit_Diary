@@ -1,8 +1,11 @@
-from datetime import datetime
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, status
-from app.models.diaries import EmotionalState, Diary
-from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryOut, DiaryListOut, EmotionalStateLiteral
+from fastapi import APIRouter, HTTPException
+
+from app.models.diaries import Diary
+from app.schemas.diary import (
+    DiaryCreate,
+    DiaryOut,
+    DiaryUpdate,
+)
 from app.services.diary_service import DiaryService
 
 router = APIRouter(prefix="/diaries", tags=["diaries"])
@@ -12,6 +15,7 @@ service = DiaryService()
 @router.post("/", response_model=DiaryOut)
 async def create_diary(diary_create: DiaryCreate):
     from app.models import User
+
     user = await User.get_or_none(id=diary_create.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

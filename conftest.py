@@ -1,6 +1,7 @@
 import pytest
 from tortoise import Tortoise
 
+
 @pytest.fixture(scope="session", autouse=True)
 async def initialize_db():
     """

@@ -1,9 +1,12 @@
 # app/tests/conftest.py
 import os
+
 import pytest
 from fastapi.testclient import TestClient
-from tortoise.contrib.test import initializer, finalizer
+from tortoise.contrib.test import finalizer, initializer
+
 from app.main import app
+
 
 @pytest.fixture(scope="module")
 def client():
@@ -12,11 +15,7 @@ def client():
     db_path = os.path.join(BASE_DIR, "test_db.sqlite3")
     db_url = f"sqlite:///{db_path}"
 
-    initializer(
-        ["app.models.diaries"],
-        db_url=db_url,
-        app_label="models"
-    )
+    initializer(["app.models.diaries"], db_url=db_url, app_label="models")
     with TestClient(app) as c:
         yield c
     finalizer()

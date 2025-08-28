@@ -1,7 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 from app.models.diaries import EmotionalState
+
 
 @pytest.mark.asyncio
 async def test_crud_diary():
@@ -13,7 +15,7 @@ async def test_crud_diary():
         "title": "테스트 일기",
         "content": "오늘은 좋은 날",
         "emotional_state": EmotionalState.HAPPY.value,
-        "ai_summary": None
+        "ai_summary": None,
     }
     response = client.post("/diaries/", json=payload_create)
     assert response.status_code == 200
@@ -32,7 +34,7 @@ async def test_crud_diary():
         "title": "수정된 일기",
         "content": "오늘은 좋은 날이었음",
         "emotional_state": EmotionalState.SAD.value,
-        "ai_summary": "AI 요약"
+        "ai_summary": "AI 요약",
     }
     response = client.put(f"/diaries/{diary_id}", json=payload_update)
     assert response.status_code == 200

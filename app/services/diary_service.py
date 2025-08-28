@@ -1,14 +1,23 @@
-from typing import List, Optional
-from app.models.diaries import Diary, Diary_Pydantic, DiaryIn_Pydantic, EmotionalState
+from typing import Optional
+
+from app.models.diaries import Diary, Diary_Pydantic, EmotionalState
+
 
 class DiaryService:
-    async def create(self, user_id: int, title: str, content: str, emotional_state: EmotionalState, ai_summary: Optional[str] = None):
+    async def create(
+        self,
+        user_id: int,
+        title: str,
+        content: str,
+        emotional_state: EmotionalState,
+        ai_summary: Optional[str] = None,
+    ):
         diary = await Diary.create(
             user_id=user_id,
             title=title,
             content=content,
             emotional_state=emotional_state,
-            ai_summary=ai_summary
+            ai_summary=ai_summary,
         )
         return await Diary_Pydantic.from_tortoise_orm(diary)
 

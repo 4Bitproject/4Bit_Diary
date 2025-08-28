@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Optional, Literal
-from pydantic import BaseModel, Field
+from typing import Literal, Optional
 
-from app.models.diaries import EmotionalState
+from pydantic import BaseModel
 
-EmotionalStateLiteral = Literal["neutral", "happy", "sad", "angry", "anxious", "excited"]
+EmotionalStateLiteral = Literal[
+    "neutral", "happy", "sad", "angry", "anxious", "excited"
+]
+
 
 class DiaryBase(BaseModel):
     title: str
@@ -12,14 +14,17 @@ class DiaryBase(BaseModel):
     emotional_state: str
     ai_summary: Optional[str] = None
 
+
 class DiaryCreate(DiaryBase):
     user_id: int
+
 
 class DiaryUpdate(BaseModel):
     title: Optional[str]
     content: Optional[str]
     emotional_state: Optional[str]
     ai_summary: Optional[str]
+
 
 class DiaryOut(BaseModel):
     id: int
@@ -31,6 +36,4 @@ class DiaryOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {
-        "from_attributes": True  # ORM 객체 바로 변환
-    }
+    model_config = {"from_attributes": True}  # ORM 객체 바로 변환

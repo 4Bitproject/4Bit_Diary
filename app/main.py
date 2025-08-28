@@ -3,11 +3,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from tortoise import Tortoise
+from tortoise.contrib.fastapi import register_tortoise
 from tortoise.exceptions import DBConnectionError
 
-from app.routers import diaries
-from tortoise.contrib.fastapi import register_tortoise
 from app.api.v1.auth import router as auth_router
+from app.routers import diaries
 
 DATABASE_URL = "sqlite://db.sqlite3"  # DB 주소는 그대로 유지
 
