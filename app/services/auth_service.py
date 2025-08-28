@@ -20,9 +20,12 @@ async def register_user_service(user_data: dict):
     try:
         hashed_password = hash_password(user_data["password"])
         new_user = await User.create(
-            email=user_data["email"], password_hash=hashed_password
+            email=user_data["email"],
+            password=hashed_password,
+            nickname=user_data["nickname"],
+            name=user_data["name"],
         )
-        return {"message": "회원가입 성공", "user_id": str(new_user.id)}
+        return {"message": "회원가입이 완료되었습니다.", "user_id": str(new_user.id)}
     except IntegrityError:
         return {"error": "이미 존재하는 이메일입니다."}
     except ValidationError as e:
@@ -34,7 +37,7 @@ async def register_user_service(user_data: dict):
 async def login_user_service(user_data: dict):
     try:
         user = await User.get_or_none(email=user_data["email"])
-        if not user or not verify_password(user_data["password"], user.password_hash):
+        if not user or not verify_password(user_data["password"], user.password):
             return {"error": "이메일 또는 비밀번호가 잘못되었습니다."}
 
         access_token = create_access_token(data={"sub": str(user.id)})
@@ -79,12 +82,11 @@ async def update_user_profile_service(current_user_id: str, new_data: dict) -> d
     try:
         user = await User.get(id=current_user_id)
 
-        # NOTE: new_data는 이미 딕셔너리이므로 .dict()를 호출하지 않습니다.
         if "email" in new_data:
             user.email = new_data["email"]
 
         if "password" in new_data:
-            user.password_hash = hash_password(new_data["password"])
+            user.password = hash_password(new_data["password"]) # 'user.password_hash'를 'user.password'로 변경
 
         await user.save()
         return {"message": "프로필이 성공적으로 업데이트되었습니다."}

@@ -9,11 +9,11 @@ TORTOISE_ORM = {
     "connections": {"default": "sqlite://:memory:"},
     "apps": {
         "models": {
-            # NOTE: "app.models.user"로 경로가 올바르게 지정되어 있어야 합니다.
             "models": [
                 "app.models.user",
                 "app.models.token_blacklist",
                 "app.models.diary",
+                "app.models.tag",
             ],
             "default_connection": "default",
         },
