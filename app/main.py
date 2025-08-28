@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from tortoise import Tortoise
 from tortoise.exceptions import DBConnectionError
 
+from app.routers import diaries
+from tortoise.contrib.fastapi import register_tortoise
 from app.api.v1.auth import router as auth_router
 
 DATABASE_URL = "sqlite://db.sqlite3"  # DB 주소는 그대로 유지
@@ -45,3 +47,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
+app.include_router(diaries.router)
+register_tortoise(
+    app,
+    db_url="sqlite://:memory:",  # 테스트용
+    modules={"models": ["app.models.diaries"]},
+    generate_schemas=True,
+    add_exception_handlers=True,
+)

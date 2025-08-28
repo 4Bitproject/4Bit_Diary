@@ -1,11 +1,11 @@
-from .diaries import Diaries
+from .diaries import Diary, EmotionalState
 from .emotion_keyword import EmotionKeyword
 from .tag import Tag
 from .user import User
 
 __all__ = [
     "User",
-    "Diaries",
+    "Diary",
     "Tag",
     "EmotionKeyword",
 ]
