@@ -8,6 +8,8 @@ from pydantic import BaseModel, EmailStr
 class UserIn(BaseModel):
     email: EmailStr
     password: str
+    nickname: str
+    name: str
 
 
 class UserLogin(BaseModel):
