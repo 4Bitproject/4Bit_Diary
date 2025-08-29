@@ -13,7 +13,7 @@ class EmotionalState(str, Enum):
 
 class Diary(models.Model):
     id = fields.IntField(pk=True)
-    user_id = fields.ForeignKeyField('models.User', related_name='diary')
+    user = fields.ForeignKeyField('models.User', related_name='diary')
     title = fields.CharField(max_length=100)
     content = fields.TextField()
     emotional_state = fields.CharEnumField(EmotionalState)
