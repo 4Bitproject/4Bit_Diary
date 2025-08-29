@@ -1,6 +1,8 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException
 
-from app.models.diaries import Diary
+from app.models.diary import Diary
 from app.schemas.diary import (
     DiaryCreate,
     DiaryOut,

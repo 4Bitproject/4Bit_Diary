@@ -1,6 +1,6 @@
 from typing import Optional
 
-from app.models.diaries import Diary, Diary_Pydantic, EmotionalState
+from app.models.diary import Diary, Diary_Pydantic, EmotionalState
 
 
 class DiaryService:
@@ -48,10 +48,9 @@ class DiaryService:
             return False
         await diary.delete()
         return True
+
+
 # app/services/diary_service.py
-
-
-from ..models.diary import Diary
 
 
 async def create_diary_service(user_id: str, diary_data: dict):

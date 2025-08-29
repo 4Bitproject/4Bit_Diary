@@ -12,7 +12,9 @@ async def initialize_db():
         "connections": {"default": "sqlite://:memory:"},
         "apps": {
             "models": {
-                "models": ["app.models.diaries"], # 실제 모델 경로를 정확하게 입력해야 합니다.
+                "models": [
+                    "app.models.diaries"
+                ],  # 실제 모델 경로를 정확하게 입력해야 합니다.
                 "default_connection": "default",
             }
         },
@@ -20,6 +22,6 @@ async def initialize_db():
     await Tortoise.init(config=DB_CONFIG)
     await Tortoise.generate_schemas()
 
-    yield # 테스트가 실행되는 시점
+    yield  # 테스트가 실행되는 시점
 
     await Tortoise.close_connections()
