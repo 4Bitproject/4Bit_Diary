@@ -2,7 +2,6 @@ from typing import List
 
 from fastapi import APIRouter, Depends, status
 
-from app.api.v1.auth import get_current_user
 from app.models.diary import Diary_Pydantic as DiaryOut
 from app.models.diary import DiaryIn_Pydantic as DiaryIn
 from app.models.user import User
@@ -14,6 +13,7 @@ from app.services.diary_service import (
     get_diary_by_id_service,
     update_diary_service,
 )
+from app.utils.security import get_current_user  # <-- 여기를 수정
 
 router = APIRouter(prefix="/diaries", tags=["diary"])
 
