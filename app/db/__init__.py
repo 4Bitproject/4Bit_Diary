@@ -5,7 +5,7 @@ TORTOISE_ORM = {
     "apps": {
         "models": {
             "models": [
-                "app.models.diaries",
+                "app.models.diary",
             ],
             "default_connection": "default",
         },
