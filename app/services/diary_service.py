@@ -1,5 +1,5 @@
 from typing import Optional
-from tortoise import fields
+
 from app.models.diary import Diary, Diary_Pydantic, EmotionalState
 
 
@@ -49,9 +49,6 @@ class DiaryService:
             return False
         await diary.delete()
         return True
-
-
-# app/services/diary_service.py
 
 
 async def create_diary_service(user_id: int, diary_data: dict):

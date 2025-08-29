@@ -1,3 +1,5 @@
+# app/core/config.py
+
 import os
 
 from dotenv import load_dotenv
@@ -5,6 +7,7 @@ from dotenv import load_dotenv
 SECRET_KEY = "your-very-secret-key-that-should-be-kept-secret"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 load_dotenv()
 
@@ -13,6 +16,7 @@ TORTOISE_ORM = {
     "apps": {
         "models": {
             "models": [
+                "aerich.models",
                 "app.models.user",
                 "app.models.token_blacklist",
                 "app.models.diary",

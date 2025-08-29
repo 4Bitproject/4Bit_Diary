@@ -1,16 +1,20 @@
-# app/services/auth_service.py
-
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from jose import JWTError, jwt
 from pydantic import ValidationError
 from tortoise.exceptions import DoesNotExist, IntegrityError
 
-from ..core.config import ALGORITHM, SECRET_KEY
+from ..core.config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    ALGORITHM,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+    SECRET_KEY,
+)
 from ..models import User
 from ..models.token_blacklist import TokenBlacklist
 from ..utils.security import (
     create_access_token,
+    create_refresh_token,
     hash_password,
     verify_password,
 )
@@ -40,8 +44,21 @@ async def login_user_service(user_data: dict):
         if not user or not verify_password(user_data["password"], user.password):
             return {"error": "이메일 또는 비밀번호가 잘못되었습니다."}
 
-        access_token = create_access_token(data={"sub": str(user.id)})
-        return {"message": "로그인 성공", "token": access_token}
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
+        access_token = create_access_token(
+            data={"sub": str(user.id)}, expires_delta=access_token_expires
+        )
+        refresh_token = create_refresh_token(
+            data={"sub": str(user.id)}, expires_delta=refresh_token_expires
+        )
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+        }
     except Exception as e:
         return {"error": f"로그인 중 오류 발생: {e}"}
 
@@ -50,18 +67,23 @@ async def logout_user_service(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         jti = payload.get("jti")
-        exp = payload.get("exp")
-        if not jti or not exp:
-            return {"error": "잘못된 토큰 형식입니다."}
-
-        await TokenBlacklist.create(jti=jti, exp=datetime.fromtimestamp(exp))
-        return {"message": "로그아웃 성공"}
+        if jti:
+            await TokenBlacklist.create(
+                jti=jti, exp=datetime.fromtimestamp(payload.get("exp"))
+            )
+            return {"message": "로그아웃 성공"}
+        return {"error": "유효하지 않은 토큰입니다."}
     except JWTError:
         return {"error": "유효하지 않은 토큰입니다."}
     except IntegrityError:
         return {"error": "이미 로그아웃된 토큰입니다."}
     except Exception as e:
         return {"error": f"로그아웃 중 오류 발생: {e}"}
+
+
+async def is_token_revoked(jti: str) -> bool:
+    token = await TokenBlacklist.get_or_none(jti=jti)
+    return token is not None
 
 
 async def get_user_profile_service(current_user_id: str) -> dict:
@@ -86,9 +108,8 @@ async def update_user_profile_service(current_user_id: str, new_data: dict) -> d
             user.email = new_data["email"]
 
         if "password" in new_data:
-            user.password = hash_password(
-                new_data["password"]
-            )  # 'user.password_hash'를 'user.password'로 변경
+            hashed_password = hash_password(new_data["password"])
+            user.password = hashed_password
 
         await user.save()
         return {"message": "프로필이 성공적으로 업데이트되었습니다."}
