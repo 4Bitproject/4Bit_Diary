@@ -1,42 +1,30 @@
-# app/api/v1/diary.py
+from fastapi import APIRouter, Depends
+from typing import List
+from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryFilter
+from app.services.diary_service import create_diary, update_diary, delete_diary, get_diary, list_diaries
 
+router = APIRouter(prefix="/diary", tags=["Diary"])
 
-from fastapi import APIRouter, Depends, HTTPException, status
+# 유저 인증 데코레이터 가정: get_current_user
+async def get_current_user():
+    return 1  # 테스트용, 실제로는 JWT나 세션에서 유저 id 가져오기
 
-# NOTE: .models.models -> .models.user 로 변경
-from ...models.user import User
-from ...services.diary_service import create_diary_service, get_diaries_service
-from ...utils.security import get_user_from_token
+@router.post("/", response_model=dict)
+async def create_diary_endpoint(data: DiaryCreate, user_id: int = Depends(get_current_user)):
+    return await create_diary(user_id, data)
 
-router = APIRouter()
+@router.put("/{diary_id}", response_model=dict)
+async def update_diary_endpoint(diary_id: int, data: DiaryUpdate):
+    return await update_diary(diary_id, data)
 
+@router.delete("/{diary_id}")
+async def delete_diary_endpoint(diary_id: int):
+    return await delete_diary(diary_id)
 
-async def get_current_user(token: str):
-    user = await get_user_from_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="인증 실패"
-        )
-    return user
+@router.get("/{diary_id}", response_model=dict)
+async def get_diary_endpoint(diary_id: int):
+    return await get_diary(diary_id)
 
-
-@router.post("/diaries", tags=["diary"])
-async def create_new_diary(
-    diary_data: dict, current_user: User = Depends(get_current_user)
-):
-    result = await create_diary_service(current_user.id, diary_data)
-    if "error" in result:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"]
-        )
-    return result
-
-
-@router.get("/diaries", tags=["diary"])
-async def get_all_diaries(current_user: User = Depends(get_current_user)):
-    result = await get_diaries_service(current_user.id)
-    if "error" in result:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"]
-        )
-    return result
+@router.post("/list", response_model=List[dict])
+async def list_diaries_endpoint(filters: DiaryFilter, user_id: int = Depends(get_current_user)):
+    return await list_diaries(user_id, filters.dict())

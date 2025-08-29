@@ -1,10 +1,13 @@
 from tortoise import Tortoise
 
 TORTOISE_ORM = {
-    "connections": {"default": "postgres://juwon:yourpassword@db:5432/diary_db"},
+    "connections": {"default": "postgres://fastapi_user:your_secure_password_123@localhost:5432/fastapi_db"},
     "apps": {
         "models": {
-            "models": ["app.models", "aerich.models"],
+            "models": [
+                "app.models",
+                "aerich.models"
+            ],
             "default_connection": "default",
         },
     },

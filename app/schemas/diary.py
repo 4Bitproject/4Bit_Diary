@@ -1,39 +1,26 @@
-from datetime import datetime
-from typing import Literal, Optional
-
 from pydantic import BaseModel
+from typing import List, Optional
+from enum import Enum
 
-EmotionalStateLiteral = Literal[
-    "neutral", "happy", "sad", "angry", "anxious", "excited"
-]
+class EmotionalState(str, Enum):
+    HAPPY = "happy"
+    SAD = "sad"
+    ANGRY = "angry"
+    NEUTRAL = "neutral"
 
-
-class DiaryBase(BaseModel):
+class DiaryCreate(BaseModel):
     title: str
     content: str
-    emotional_state: str
-    ai_summary: Optional[str] = None
-
-
-class DiaryCreate(DiaryBase):
-    user_id: int
-
+    emotional_state: EmotionalState
+    tags: Optional[List[str]] = []
 
 class DiaryUpdate(BaseModel):
-    title: Optional[str]
-    content: Optional[str]
-    emotional_state: Optional[str]
-    ai_summary: Optional[str]
+    title: Optional[str] = None
+    content: Optional[str] = None
+    emotional_state: Optional[EmotionalState] = None
+    tags: Optional[List[str]] = None
 
-
-class DiaryOut(BaseModel):
-    id: int
-    user_id: int
-    title: str
-    content: str
-    emotional_state: str
-    ai_summary: Optional[str]
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}  # ORM 객체 바로 변환
+class DiaryFilter(BaseModel):
+    keyword: Optional[str] = None
+    emotional_state: Optional[EmotionalState] = None
+    tags: Optional[List[str]] = None

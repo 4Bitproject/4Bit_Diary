@@ -1,66 +1,30 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends
+from typing import List
+from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryFilter
+from app.services.diary_service import create_diary, update_diary, delete_diary, get_diary, list_diaries
 
-from app.models.diaries import Diary
-from app.schemas.diary import (
-    DiaryCreate,
-    DiaryOut,
-    DiaryUpdate,
-)
-from app.services.diary_service import DiaryService
+router = APIRouter(prefix="/diary", tags=["Diary"])
 
-router = APIRouter(prefix="/diaries", tags=["diaries"])
-service = DiaryService()
+# 유저 인증 데코레이터 가정: get_current_user
+async def get_current_user():
+    return 1  # 테스트용, 실제로는 JWT나 세션에서 유저 id 가져오기
 
+@router.post("/", response_model=dict)
+async def create_diary_endpoint(data: DiaryCreate, user_id: int = Depends(get_current_user)):
+    return await create_diary(user_id, data)
 
-@router.post("/", response_model=DiaryOut)
-async def create_diary(diary_create: DiaryCreate):
-    from app.models import User
+@router.put("/{diary_id}", response_model=dict)
+async def update_diary_endpoint(diary_id: int, data: DiaryUpdate):
+    return await update_diary(diary_id, data)
 
-    user = await User.get_or_none(id=diary_create.user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+@router.delete("/{diary_id}")
+async def delete_diary_endpoint(diary_id: int):
+    return await delete_diary(diary_id)
 
-    diary = await Diary.create(**diary_create.model_dump())
-    return DiaryOut.model_validate(diary)
+@router.get("/{diary_id}", response_model=dict)
+async def get_diary_endpoint(diary_id: int):
+    return await get_diary(diary_id)
 
-
-# READ ALL
-@router.get("/", response_model=List[DiaryOut])
-async def list_diaries():
-    diaries = await Diary.all()
-    return [DiaryOut.model_validate(d) for d in diaries]
-
-
-# READ ONE
-@router.get("/{diary_id}", response_model=DiaryOut)
-async def get_diary(diary_id: int):
-    diary = await Diary.get_or_none(id=diary_id)
-    if not diary:
-        raise HTTPException(status_code=404, detail="Diary not found")
-    return DiaryOut.model_validate(diary)
-
-
-# UPDATE
-@router.put("/{diary_id}", response_model=DiaryOut)
-async def update_diary(diary_id: int, diary_update: DiaryUpdate):
-    diary = await Diary.get_or_none(id=diary_id)
-    if not diary:
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    update_data = diary_update.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(diary, key, value)
-    await diary.save()
-
-    return DiaryOut.model_validate(diary)
-
-
-# DELETE
-@router.delete("/{diary_id}", response_model=dict)
-async def delete_diary(diary_id: int):
-    diary = await Diary.get_or_none(id=diary_id)
-    if not diary:
-        raise HTTPException(status_code=404, detail="Diary not found")
-
-    await diary.delete()
-    return {"detail": "Diary deleted successfully"}
+@router.post("/list", response_model=List[dict])
+async def list_diaries_endpoint(filters: DiaryFilter, user_id: int = Depends(get_current_user)):
+    return await list_diaries(user_id, filters.dict())
