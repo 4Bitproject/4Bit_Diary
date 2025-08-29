@@ -51,8 +51,6 @@ class DiaryService:
         return True
 
 
-# app/services/diary_service.py
-
 
 async def create_diary_service(user_id: int, diary_data: dict):
     try:
