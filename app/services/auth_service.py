@@ -5,10 +5,10 @@ from pydantic import ValidationError
 from tortoise.exceptions import DoesNotExist, IntegrityError
 
 from ..core.config import (
-    ALGORITHM,
-    SECRET_KEY,
     ACCESS_TOKEN_EXPIRE_MINUTES,
+    ALGORITHM,
     REFRESH_TOKEN_EXPIRE_DAYS,
+    SECRET_KEY,
 )
 from ..models import User
 from ..models.token_blacklist import TokenBlacklist

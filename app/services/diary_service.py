@@ -1,5 +1,5 @@
 from typing import Optional
-from tortoise import fields
+
 from app.models.diary import Diary, Diary_Pydantic, EmotionalState
 
 

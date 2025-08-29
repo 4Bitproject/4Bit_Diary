@@ -9,8 +9,8 @@ from tortoise.exceptions import DoesNotExist
 # .env 파일 등에서 SECRET_KEY와 만료 시간을 가져옵니다.
 from ..core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    REFRESH_TOKEN_EXPIRE_DAYS,
     ALGORITHM,
+    REFRESH_TOKEN_EXPIRE_DAYS,
     SECRET_KEY,
 )
 from ..models import User
