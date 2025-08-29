@@ -1,7 +1,6 @@
-from typing import List
-from tortoise.expressions import Q
-from models.diary import Diary, DiaryTag, Diary_Pydantic, DiaryIn_Pydantic
-from models.tag import Tag  # Tag 모델이 있다고 가정
+from typing import Optional
+
+from app.models.diary import Diary, Diary_Pydantic, EmotionalState
 
 async def create_diary(user_id: int, data):
     diary_obj = await Diary.create(
@@ -26,27 +25,29 @@ async def update_diary(diary_id: int, data):
     diary_obj.emotional_state = data.emotional_state or diary_obj.emotional_state
     await diary_obj.save()
 
-    if data.tags is not None:
-        # 기존 태그 삭제
-        await DiaryTag.filter(diary=diary_obj).delete()
-        # 새 태그 생성
-        for tag_name in data.tags:
-            tag_obj, _ = await Tag.get_or_create(name=tag_name)
-            await DiaryTag.create(diary=diary_obj, tag=tag_obj)
+    async def delete(self, diary_id: int):
+        diary = await Diary.get_or_none(id=diary_id)
+        if not diary:
+            return False
+        await diary.delete()
+        return True
+
+
+# app/services/diary_service.py
 
     return await Diary_Pydantic.from_tortoise_orm(diary_obj)
 
-async def delete_diary(diary_id: int):
-    diary_obj = await Diary.get(id=diary_id)
-    await diary_obj.delete()
-    return {"message": "Diary deleted"}
-
-async def get_diary(diary_id: int):
-    diary_obj = await Diary_Pydantic.from_queryset_single(Diary.get(id=diary_id))
-    return diary_obj
-
-async def list_diaries(user_id: int, filters: dict):
-    query = Q(user_id=user_id)
+async def create_diary_service(user_id: str, diary_data: dict):
+    try:
+        new_diary = await Diary.create(
+            user_id=user_id,
+            title=diary_data["title"],
+            content=diary_data["content"],
+            emotional_state=diary_data["emotional_state"],
+        )
+        return {"message": "일기 생성 성공", "diary_id": str(new_diary.diary_id)}
+    except Exception as e:
+        return {"error": f"일기 생성 중 오류 발생: {e}"}
 
     if filters.get("keyword"):
         query &= Q(title__icontains=filters["keyword"]) | Q(content__icontains=filters["keyword"])

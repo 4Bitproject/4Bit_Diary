@@ -17,10 +17,10 @@ RUN pip install uv
 
 # Python 의존성 파일 복사 및 설치
 COPY requirements.txt .
-RUN uv pip install --system --no-cache-dir -r requirements.txt
+RUN uv pip install --no-cache-dir -r requirements.txt  --system
 
 # aerich 설치 (requirements.txt에 포함되지 않은 경우)
-RUN uv pip install --system aerich
+# RUN uv pip install aerich
 
 # 애플리케이션 코드 복사
 COPY . .
