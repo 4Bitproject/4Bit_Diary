@@ -13,7 +13,7 @@ class EmotionalState(str, Enum):
 
 class Diary(models.Model):
     id = fields.IntField(pk=True)
-    user_id = fields.IntField()
+    user = fields.ForeignKeyField("models.User", related_name="diary")
     title = fields.CharField(max_length=100)
     content = fields.TextField()
     emotional_state = fields.CharEnumField(EmotionalState, null=True)
@@ -23,15 +23,17 @@ class Diary(models.Model):
     tags = fields.ManyToManyField("models.Tag")
 
 
-# Pydantic schemas
+# 읽기용(응답용)
 Diary_Pydantic = pydantic_model_creator(Diary, name="Diary")
+
+# 입력용(생성/업데이트용)
 DiaryIn_Pydantic = pydantic_model_creator(Diary, name="DiaryIn", exclude_readonly=True)
-
-
-class DiaryTag(models.Model):
-    diary = fields.ForeignKeyField("models.Diary", related_name="diary_tags")
-    tag = fields.ForeignKeyField("models.Tag", related_name="diary_tags")
-
-    class Meta:
-        table = "diary_tags"
-        unique_together = [("diary", "tag")]
+#
+#
+# class DiaryTag(models.Model):
+#     diary = fields.ForeignKeyField("models.Diary", related_name="diary_tags")
+#     tag = fields.ForeignKeyField("models.Tag", related_name="diary_tags")
+#
+#     class Meta:
+#         table = "diary_tags"
+#         unique_together = [("diary", "tag")]
