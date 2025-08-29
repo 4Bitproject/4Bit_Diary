@@ -4,7 +4,12 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 from tortoise.exceptions import DoesNotExist, IntegrityError
 
-from ..core.config import ALGORITHM, SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
+from ..core.config import (
+    ALGORITHM,
+    SECRET_KEY,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+)
 from ..models import User
 from ..models.token_blacklist import TokenBlacklist
 from ..utils.security import (
@@ -13,6 +18,7 @@ from ..utils.security import (
     hash_password,
     verify_password,
 )
+
 
 async def register_user_service(user_data: dict):
     try:
@@ -30,6 +36,7 @@ async def register_user_service(user_data: dict):
         return {"error": "유효성 검사 실패", "details": e.errors()}
     except Exception as e:
         return {"error": f"알 수 없는 오류 발생: {e}"}
+
 
 async def login_user_service(user_data: dict):
     try:
@@ -55,12 +62,15 @@ async def login_user_service(user_data: dict):
     except Exception as e:
         return {"error": f"로그인 중 오류 발생: {e}"}
 
+
 async def logout_user_service(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         jti = payload.get("jti")
         if jti:
-            await TokenBlacklist.create(jti=jti, exp=datetime.fromtimestamp(payload.get("exp")))
+            await TokenBlacklist.create(
+                jti=jti, exp=datetime.fromtimestamp(payload.get("exp"))
+            )
             return {"message": "로그아웃 성공"}
         return {"error": "유효하지 않은 토큰입니다."}
     except JWTError:
@@ -70,9 +80,11 @@ async def logout_user_service(token: str):
     except Exception as e:
         return {"error": f"로그아웃 중 오류 발생: {e}"}
 
+
 async def is_token_revoked(jti: str) -> bool:
     token = await TokenBlacklist.get_or_none(jti=jti)
     return token is not None
+
 
 async def get_user_profile_service(current_user_id: str) -> dict:
     try:
@@ -86,6 +98,7 @@ async def get_user_profile_service(current_user_id: str) -> dict:
         return {"error": "사용자를 찾을 수 없습니다."}
     except Exception as e:
         return {"error": f"프로필 조회 중 오류 발생: {e}"}
+
 
 async def update_user_profile_service(current_user_id: str, new_data: dict) -> dict:
     try:
@@ -106,6 +119,7 @@ async def update_user_profile_service(current_user_id: str, new_data: dict) -> d
         return {"error": "이미 존재하는 이메일입니다."}
     except Exception as e:
         return {"error": f"프로필 업데이트 중 오류 발생: {e}"}
+
 
 async def delete_user_service(current_user_id: str) -> dict:
     try:

@@ -51,7 +51,6 @@ class DiaryService:
         return True
 
 
-
 async def create_diary_service(user_id: int, diary_data: dict):
     try:
         # created_at과 updated_at을 인자로 전달하지 않습니다.

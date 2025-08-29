@@ -57,6 +57,7 @@ def verify_token(token: str) -> Optional[dict]:
     except JWTError:
         return None
 
+
 # 토큰의 유효성을 검사하고, 블랙리스트를 확인한 후 사용자 정보를 반환합니다.
 async def get_user_from_token(token: str) -> Optional[User]:
     payload = verify_token(token)

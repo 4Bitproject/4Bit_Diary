@@ -30,8 +30,10 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
+
 class UpdateProfileRequest(BaseModel):
     new_data: dict
+
 
 @router.post("/register", tags=["auth"])
 async def register(user_in: UserIn):
@@ -42,6 +44,7 @@ async def register(user_in: UserIn):
         )
     return result
 
+
 @router.post("/login", tags=["auth"])
 async def login(user_in: UserIn):
     result = await login_user_service(user_in.dict())
@@ -51,9 +54,11 @@ async def login(user_in: UserIn):
         )
     return result
 
+
 @router.post("/logout", status_code=status.HTTP_200_OK, tags=["auth"])
 async def logout(token: str = Query(...)):
     return await logout_user_service(token)
+
 
 @router.get("/profile", response_model=UserResponse, tags=["auth"])
 async def get_user_profile(token: str = Query(...)):
@@ -74,6 +79,7 @@ async def get_user_profile(token: str = Query(...)):
         "email": user.email,
         "created_at": user.created_at.isoformat(),
     }
+
 
 @router.put("/profile", tags=["auth"])
 async def update_profile(request: UpdateProfileRequest, token: str = Query(...)):
@@ -96,6 +102,7 @@ async def update_profile(request: UpdateProfileRequest, token: str = Query(...))
         )
     return result
 
+
 @router.delete("/profile", tags=["auth"])
 async def delete_profile(token: str = Query(...)):
     payload = verify_token(token)
@@ -117,6 +124,7 @@ async def delete_profile(token: str = Query(...)):
         )
     return result
 
+
 @router.post("/refresh", tags=["auth"])
 async def refresh_token(token: str = Query(...)):
     try:
@@ -126,26 +134,29 @@ async def refresh_token(token: str = Query(...)):
         if not jti or await is_token_revoked(jti):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="이미 로그아웃된 토큰이거나 잘못된 토큰 형식입니다."
+                detail="이미 로그아웃된 토큰이거나 잘못된 토큰 형식입니다.",
             )
 
         user_id = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="유효하지 않은 리프레시 토큰입니다.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="유효하지 않은 리프레시 토큰입니다.",
+            )
 
         user = await User.get_or_none(id=user_id)
         if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="사용자를 찾을 수 없습니다.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="사용자를 찾을 수 없습니다.",
+            )
 
         new_access_token = create_access_token(
             data={"sub": str(user.id)},
-            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         )
 
-        return {
-            "access_token": new_access_token,
-            "token_type": "bearer"
-        }
+        return {"access_token": new_access_token, "token_type": "bearer"}
 
     except JWTError:
         raise HTTPException(
