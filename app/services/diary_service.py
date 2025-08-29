@@ -1,5 +1,5 @@
 from typing import Optional
-
+from tortoise import fields
 from app.models.diary import Diary, Diary_Pydantic, EmotionalState
 
 
@@ -12,6 +12,7 @@ class DiaryService:
         emotional_state: EmotionalState,
         ai_summary: Optional[str] = None,
     ):
+        # created_at, updated_at 필드는 Tortoise ORM이 자동으로 채워줍니다.
         diary = await Diary.create(
             user_id=user_id,
             title=title,
@@ -53,25 +54,28 @@ class DiaryService:
 # app/services/diary_service.py
 
 
-async def create_diary_service(user_id: str, diary_data: dict):
+async def create_diary_service(user_id: int, diary_data: dict):
     try:
+        # created_at과 updated_at을 인자로 전달하지 않습니다.
+        # Tortoise ORM이 자동으로 처리합니다.
         new_diary = await Diary.create(
             user_id=user_id,
             title=diary_data["title"],
             content=diary_data["content"],
             emotional_state=diary_data["emotional_state"],
         )
-        return {"message": "일기 생성 성공", "diary_id": str(new_diary.diary_id)}
+        return {"message": "일기 생성 성공", "diary_id": str(new_diary.id)}
     except Exception as e:
         return {"error": f"일기 생성 중 오류 발생: {e}"}
 
 
-async def get_diaries_service(user_id: str):
+async def get_diaries_service(user_id: int):
     try:
-        diaries = await Diary.filter(user_id=user_id).order_by("-created_date")
+        # created_date를 created_at으로 수정합니다.
+        diaries = await Diary.filter(user_id=user_id).order_by("-created_at")
         return [
             {
-                "id": d.diary_id,
+                "id": d.id,
                 "title": d.title,
                 "content": d.content,
                 "emotional_state": d.emotional_state,
