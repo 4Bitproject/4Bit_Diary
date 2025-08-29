@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from pydantic import BaseModel
-from typing import List, Optional
 from enum import Enum
+from typing import Optional, List
+
 
 class EmotionalState(str, Enum):
     HAPPY = "happy"
@@ -11,16 +14,22 @@ class EmotionalState(str, Enum):
 class DiaryCreate(BaseModel):
     title: str
     content: str
-    emotional_state: EmotionalState
-    tags: Optional[List[str]] = []
+    emotional_state: str
+    tags: List[str]  # 태그 필드를 추가하여 리스트 형식의 문자열을 허용합니다.
+
 
 class DiaryUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    emotional_state: Optional[EmotionalState] = None
-    tags: Optional[List[str]] = None
+    title: str | None = None
+    content: str | None = None
+    emotional_state: EmotionalState | None = None
 
-class DiaryFilter(BaseModel):
-    keyword: Optional[str] = None
-    emotional_state: Optional[EmotionalState] = None
-    tags: Optional[List[str]] = None
+
+class DiaryOut(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    content: str
+    emotional_state: EmotionalState
+    ai_summary: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime

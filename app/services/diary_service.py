@@ -1,60 +1,85 @@
-from typing import Optional
+from typing import List, Optional
+from fastapi import HTTPException, status
 
-from app.models.diary import Diary, Diary_Pydantic, EmotionalState
-
-async def create_diary(user_id: int, data):
-    diary_obj = await Diary.create(
-        user_id=user_id,
-        title=data.title,
-        content=data.content,
-        emotional_state=data.emotional_state
-    )
-
-    # 태그 처리
-    if data.tags:
-        for tag_name in data.tags:
-            tag_obj, _ = await Tag.get_or_create(name=tag_name)
-            await DiaryTag.create(diary=diary_obj, tag=tag_obj)
-
-    return await Diary_Pydantic.from_tortoise_orm(diary_obj)
-
-async def update_diary(diary_id: int, data):
-    diary_obj = await Diary.get(id=diary_id)
-    diary_obj.title = data.title or diary_obj.title
-    diary_obj.content = data.content or diary_obj.content
-    diary_obj.emotional_state = data.emotional_state or diary_obj.emotional_state
-    await diary_obj.save()
-
-    async def delete(self, diary_id: int):
-        diary = await Diary.get_or_none(id=diary_id)
-        if not diary:
-            return False
-        await diary.delete()
-        return True
+from app.models import User
+from app.models.diary import Diary, EmotionalState
+from app.schemas.diary import DiaryCreate, DiaryUpdate
+from tortoise.contrib.pydantic import pydantic_model_creator
 
 
-# app/services/diary_service.py
+# Pydantic 모델 정의
+# 이 파일에서 모든 모델 관련 작업을 처리합니다.
+Diary_Pydantic = pydantic_model_creator(Diary, name="Diary")
+DiaryIn_Pydantic = pydantic_model_creator(Diary, name="DiaryIn", exclude_readonly=True)
 
-    return await Diary_Pydantic.from_tortoise_orm(diary_obj)
 
-async def create_diary_service(user_id: str, diary_data: dict):
+async def create_diary_service(user: User, diary_data: DiaryCreate):
+    """
+    새 일기를 생성합니다. user_id 대신 User 객체를 직접 사용합니다.
+    """
     try:
         new_diary = await Diary.create(
-            user_id=user_id,
-            title=diary_data["title"],
-            content=diary_data["content"],
-            emotional_state=diary_data["emotional_state"],
+            user=user,  # Foreign Key 관계에 따라 User 객체 자체를 할당합니다.
+            title=diary_data.title,
+            content=diary_data.content,
+            emotional_state=diary_data.emotional_state,
         )
-        return {"message": "일기 생성 성공", "diary_id": str(new_diary.diary_id)}
+        return new_diary
     except Exception as e:
-        return {"error": f"일기 생성 중 오류 발생: {e}"}
+        print(f"일기 생성 중 오류 발생: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="일기 생성 중 알 수 없는 오류가 발생했습니다."
+        )
 
-    if filters.get("keyword"):
-        query &= Q(title__icontains=filters["keyword"]) | Q(content__icontains=filters["keyword"])
-    if filters.get("emotional_state"):
-        query &= Q(emotional_state=filters["emotional_state"])
-    if filters.get("tags"):
-        query &= Q(diary_tags__tag__name__in=filters["tags"])
 
-    diaries = await Diary_Pydantic.from_queryset(Diary.filter(query).distinct())
-    return diaries
+
+async def get_all_diaries_service(user_id: int) -> List[Diary_Pydantic]:
+    """
+    사용자의 모든 일기 목록을 조회합니다.
+    """
+    diaries = await Diary.filter(user_id=user_id).order_by("-created_at")
+    return [await Diary_Pydantic.from_tortoise_orm(d) for d in diaries]
+
+
+async def get_diary_by_id_service(diary_id: int, user_id: int) -> Diary_Pydantic:
+    """
+    특정 일기를 조회합니다.
+    """
+    diary = await Diary.get_or_none(id=diary_id, user_id=user_id)
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="해당 일기를 찾을 수 없거나 권한이 없습니다."
+        )
+    return await Diary_Pydantic.from_tortoise_orm(diary)
+
+
+async def update_diary_service(diary_id: int, diary_data: DiaryUpdate, user_id: int) -> Diary_Pydantic:
+    """
+    일기를 수정합니다.
+    """
+    diary = await Diary.get_or_none(id=diary_id, user_id=user_id)
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="해당 일기를 찾을 수 없거나 권한이 없습니다."
+        )
+
+    # `exclude_unset=True`를 사용해 제공된 필드만 업데이트합니다.
+    await diary.update_from_dict(diary_data.model_dump(exclude_unset=True)).save()
+
+    return await Diary_Pydantic.from_tortoise_orm(diary)
+
+
+async def delete_diary_service(diary_id: int, user_id: int):
+    """
+    일기를 삭제합니다.
+    """
+    diary = await Diary.get_or_none(id=diary_id, user_id=user_id)
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="해당 일기를 찾을 수 없거나 권한이 없습니다."
+        )
+    await diary.delete()

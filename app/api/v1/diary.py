@@ -1,30 +1,51 @@
-from fastapi import APIRouter, Depends
-from typing import List
-from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryFilter
-from app.services.diary_service import create_diary, update_diary, delete_diary, get_diary, list_diaries
+from fastapi import APIRouter, HTTPException, Depends
+from typing import List, Dict
+from app.services.diary_service import (
+    create_diary_service,
+    get_diaries_service,
+    delete_diary_service,
+    update_diary_service,
+)
 
-router = APIRouter(prefix="/diary", tags=["Diary"])
+router = APIRouter(prefix="/diaries", tags=["diaries"])
 
-# 유저 인증 데코레이터 가정: get_current_user
-async def get_current_user():
-    return 1  # 테스트용, 실제로는 JWT나 세션에서 유저 id 가져오기
+# 사용자 인증 예시 (실제 auth 모듈과 연동 필요)
+async def get_current_user_id():
+    # 예시: 임시로 고정 user_id 반환
+    return "user_1"
 
-@router.post("/", response_model=dict)
-async def create_diary_endpoint(data: DiaryCreate, user_id: int = Depends(get_current_user)):
-    return await create_diary(user_id, data)
 
-@router.put("/{diary_id}", response_model=dict)
-async def update_diary_endpoint(diary_id: int, data: DiaryUpdate):
-    return await update_diary(diary_id, data)
+# 일기 생성
+@router.post("/", response_model=Dict)
+async def create_diary(diary_data: Dict, user_id: str = Depends(get_current_user_id)):
+    result = await create_diary_service(user_id, diary_data)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
 
-@router.delete("/{diary_id}")
-async def delete_diary_endpoint(diary_id: int):
-    return await delete_diary(diary_id)
 
-@router.get("/{diary_id}", response_model=dict)
-async def get_diary_endpoint(diary_id: int):
-    return await get_diary(diary_id)
+# 일기 목록 조회
+@router.get("/", response_model=List[Dict])
+async def get_diaries(user_id: str = Depends(get_current_user_id)):
+    result = await get_diaries_service(user_id)
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
 
-@router.post("/list", response_model=List[dict])
-async def list_diaries_endpoint(filters: DiaryFilter, user_id: int = Depends(get_current_user)):
-    return await list_diaries(user_id, filters.dict())
+
+# 일기 삭제
+@router.delete("/{diary_id}", response_model=Dict)
+async def delete_diary(diary_id: str):
+    result = await delete_diary_service(diary_id)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
+
+
+# 일기 수정
+@router.put("/{diary_id}", response_model=Dict)
+async def update_diary(diary_id: str, diary_data: Dict):
+    result = await update_diary_service(diary_id, diary_data)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
