@@ -164,3 +164,12 @@ async def refresh_token(token: str = Query(...)):
             detail="유효하지 않거나 만료된 리프레시 토큰입니다.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+async def get_current_user(token: str):
+    user = await get_user_from_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="인증 실패"
+        )
+    return user
