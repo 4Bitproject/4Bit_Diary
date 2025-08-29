@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
-from .api.v1 import auth
+
 from app.routers import diary
 
+from .api.v1 import auth
 
 # from tortoise.connections import connections # 이 줄은 삭제합니다
 from .core.config import TORTOISE_ORM

@@ -1,8 +1,8 @@
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional
 
 from pydantic import BaseModel
-from enum import Enum
-from typing import Optional, List
 
 
 class EmotionalState(str, Enum):
@@ -10,6 +10,7 @@ class EmotionalState(str, Enum):
     SAD = "sad"
     ANGRY = "angry"
     NEUTRAL = "neutral"
+
 
 class DiaryCreate(BaseModel):
     title: str
