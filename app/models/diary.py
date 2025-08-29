@@ -12,7 +12,7 @@ class EmotionalState(str, Enum):
 
 
 class Diary(models.Model):
-    id = fields.IntField(primary_key=True)
+    id = fields.IntField(pk=True)
     user_id = fields.IntField()
     title = fields.CharField(max_length=100)
     content = fields.TextField()
@@ -20,6 +20,7 @@ class Diary(models.Model):
     ai_summary = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
+    tags = fields.ManyToManyField("models.Tag")
 
 
 # Pydantic schemas

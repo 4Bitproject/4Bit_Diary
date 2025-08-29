@@ -6,6 +6,8 @@ TORTOISE_ORM = {
         "models": {
             "models": [
                 "app.models.diary",
+                "app.models.tag",
+                "aerich.models",
             ],
             "default_connection": "default",
         },
