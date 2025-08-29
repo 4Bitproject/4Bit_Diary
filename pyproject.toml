@@ -45,6 +45,6 @@ select = ["E", "F", "I"]
 ignore = ["E501"]  # 줄 길이 제한 무시
 
 [tool.aerich]
-tortoise_orm = "app.core.config.TORTOISE_ORM"
+tortoise_orm = "app.database.TORTOISE_ORM"
 location = "./migrations"
 src_folder = "./."
