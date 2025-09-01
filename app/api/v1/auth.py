@@ -11,7 +11,7 @@ from ...core.config import (
     SECRET_KEY,
 )
 from ...models.user import User
-from ...schemas.user import UserIn, UserResponse
+from ...schemas.user import UserIn, UserLogin, UserUpdate, UserResponse
 from ...services.auth_service import (
     delete_user_service,
     is_token_revoked,
@@ -32,12 +32,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 class UpdateProfileRequest(BaseModel):
-    new_data: dict
+    new_data: UserUpdate
 
 
 @router.post("/register", tags=["auth"])
 async def register(user_in: UserIn):
-    result = await register_user_service(user_in.dict())
+    result = await register_user_service(user_in.model_dump())
     if "error" in result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"]
@@ -46,8 +46,8 @@ async def register(user_in: UserIn):
 
 
 @router.post("/login", tags=["auth"])
-async def login(user_in: UserIn):
-    result = await login_user_service(user_in.dict())
+async def login(user_in: UserLogin):
+    result = await login_user_service(user_in.model_dump())
     if "error" in result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"]

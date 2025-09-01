@@ -7,7 +7,7 @@ from app.models import User
 from app.models.diary import Diary
 from app.models.tag import Tag
 from app.schemas.diary import DiaryCreate, DiaryUpdate
-
+from app.models.tag import Tag
 # Pydantic 모델 정의
 # 이 파일에서 모든 모델 관련 작업을 처리합니다.
 Diary_Pydantic = pydantic_model_creator(Diary, name="Diary")
@@ -15,16 +15,16 @@ DiaryIn_Pydantic = pydantic_model_creator(Diary, name="DiaryIn", exclude_readonl
 
 
 async def create_diary_service(user: User, diary_data: DiaryCreate):
-    """
-    새 일기를 생성합니다. user_id 대신 User 객체를 직접 사용합니다.
-    """
     try:
+        # 1. tags를 제외하고 Diary 인스턴스를 먼저 생성합니다.
         new_diary = await Diary.create(
-            user=user,  # Foreign Key 관계에 따라 User 객체 자체를 할당합니다.
+            user=user,
             title=diary_data.title,
             content=diary_data.content,
             emotional_state=diary_data.emotional_state,
+            ai_summary=diary_data.ai_summary,  # ai_summary 필드도 추가
         )
+
 
         # 태그 처리
         if diary_data.tags:
@@ -38,6 +38,7 @@ async def create_diary_service(user: User, diary_data: DiaryCreate):
 
         return new_diary
     except Exception as e:
+
         print(f"일기 생성 중 오류 발생: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

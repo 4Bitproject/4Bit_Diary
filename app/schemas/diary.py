@@ -15,6 +15,7 @@ class EmotionalState(str, Enum):
 class DiaryCreate(BaseModel):
     title: str
     content: str
+
     emotional_state: str
     tags: Optional[List[str]] = (
         []

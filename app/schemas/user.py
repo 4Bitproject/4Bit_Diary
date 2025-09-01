@@ -37,3 +37,11 @@ class UserSchema(BaseModel):
 
 class UserInDB(UserSchema):
     hashed_password: str
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    nickname: Optional[str] = None
+    name: Optional[str] = None
+
+class UpdateProfileRequest(BaseModel):
+    new_data: UserUpdate
