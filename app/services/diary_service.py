@@ -5,6 +5,7 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 
 from app.models import User
 from app.models.diary import Diary
+from app.models.tag import Tag
 from app.schemas.diary import DiaryCreate, DiaryUpdate
 
 # Pydantic 모델 정의
@@ -24,6 +25,17 @@ async def create_diary_service(user: User, diary_data: DiaryCreate):
             content=diary_data.content,
             emotional_state=diary_data.emotional_state,
         )
+
+        # 태그 처리
+        if diary_data.tags:
+            for tag_name in diary_data.tags:
+                # 태그가 없으면 생성, 있으면 가져오기
+                tag, _ = await Tag.get_or_create(name=tag_name)
+                await new_diary.tags.add(tag)
+
+        # 태그 관계 포함해서 반환
+        await new_diary.fetch_related("tags")
+
         return new_diary
     except Exception as e:
         print(f"일기 생성 중 오류 발생: {e}")

@@ -11,7 +11,9 @@ from app.utils.security import get_current_user
 def dummy_get_current_user():
     return {"id": 1}
 
+
 app.dependency_overrides[get_current_user] = dummy_get_current_user
+
 
 # **2. 테스트 클라이언트 생성**
 # pytest 픽스처를 사용하여 테스트 클라이언트를 생성합니다.
@@ -19,6 +21,7 @@ app.dependency_overrides[get_current_user] = dummy_get_current_user
 def client():
     with TestClient(app) as c:
         yield c
+
 
 # **3. 통합 테스트 시나리오**
 # 테스트 함수는 test_로 시작해야 pytest가 인식합니다.
@@ -33,7 +36,7 @@ def test_full_diary_lifecycle(client):
         "title": "테스트 통합 일기",
         "content": "통합 테스트 내용입니다.",
         "emotional_state": "happy",
-        "tags": ["통합", "테스트"]
+        "tags": ["통합", "테스트"],
     }
     response = client.post("/api/v1/diary/create", json=create_data)
 
@@ -68,7 +71,7 @@ def test_full_diary_lifecycle(client):
     update_data = {
         "title": "수정된 제목",
         "content": "내용이 수정되었습니다.",
-        "emotional_state": "calm"
+        "emotional_state": "calm",
     }
     response = client.put(f"/api/v1/diary/{diary_id}", json=update_data)
     assert response.status_code == 200
@@ -84,4 +87,4 @@ def test_full_diary_lifecycle(client):
 
     # 삭제 후 다시 조회하여 존재하지 않는지 확인합니다.
     response = client.get(f"/api/v1/diary/{diary_id}")
-    assert response.status_code == 404 # Not Found
+    assert response.status_code == 404  # Not Found
