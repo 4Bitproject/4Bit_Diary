@@ -4,9 +4,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 
 from app.api.v1.auth import get_current_user
-from app.models.diary import Diary_Pydantic as DiaryOut
 from app.models.user import User
-from app.schemas.diary import DiaryCreate, DiaryUpdate
+from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryOut
 from app.services.diary_service import (
     create_diary_service,
     delete_diary_service,
@@ -19,25 +18,20 @@ from app.services.search_service import search_diary
 
 router = APIRouter(prefix="/api/v1/diary", tags=["diary"])
 
-
 # 일기 생성
 @router.post("/create", response_model=DiaryOut)
 async def create_new_diary(
-    diary_data: DiaryCreate,  # DiaryIn 대신 DiaryCreate 사용
+    diary_data: DiaryCreate,
     current_user: User = Depends(get_current_user),
 ):
+    new_diary_orm = await create_diary_service(current_user, diary_data)
 
-    # 서비스 함수에 Pydantic 모델과 User 객체를 직접 전달합니다.
-    new_diary = await create_diary_service(current_user, diary_data)
-
-    return await DiaryOut.from_tortoise_orm(new_diary)
-
+    return DiaryOut.model_validate(new_diary_orm)
 
 # 모든 일기 조회
 @router.get("/inquiry", response_model=List[DiaryOut])
 async def get_diaries(current_user: User = Depends(get_current_user)):
     return await get_all_diaries_service(current_user.id)
-
 
 # 일기 검색
 @router.get("/search", response_model=List[DiaryOut])
@@ -58,8 +52,7 @@ async def search_diaries(
         end_date=end_date,
     )
 
-    return [await DiaryOut.from_tortoise_orm(diary) for diary in diaries]
-
+    return [DiaryOut.model_validate(diary) for diary in diaries]
 
 # 특정 일기 조회
 @router.get("/{diary_id}", response_model=DiaryOut)
@@ -68,6 +61,7 @@ async def get_diary(diary_id: int, current_user: User = Depends(get_current_user
     diary_id 를 입력하면 조회해 주는 기능
     """
     return await get_diary_by_id_service(diary_id, current_user.id)
+
 
 
 # 일기 AI 요약 생성
@@ -91,7 +85,6 @@ async def update_diary(
     diary_id: int, data: DiaryUpdate, current_user: User = Depends(get_current_user)
 ):
     return await update_diary_service(diary_id, data, current_user.id)
-
 
 # 일기 삭제
 @router.delete("/{diary_id}")

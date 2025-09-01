@@ -1,30 +1,14 @@
-import pytest
-from fastapi.testclient import TestClient
+import sys
+import os
+
+# 현재 스크립트의 상위 디렉토리(app/)를 PYTHONPATH에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# 프로젝트 루트 디렉토리(4Bit_Diary/)를 PYTHONPATH에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from app.main import app
-from app.utils.security import get_current_user
+from app.models.diary import EmotionalState
 
-
-# **1. 의존성 오버라이드 (가상 사용자)**
-# 테스트를 위해 get_current_user 함수를 임시로 가짜 사용자를 반환하도록 오버라이드합니다.
-# 이렇게 해야 토큰 없이도 API 테스트가 가능합니다.
-def dummy_get_current_user():
-    return {"id": 1}
-
-
-app.dependency_overrides[get_current_user] = dummy_get_current_user
-
-
-# **2. 테스트 클라이언트 생성**
-# pytest 픽스처를 사용하여 테스트 클라이언트를 생성합니다.
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
-
-
-# **3. 통합 테스트 시나리오**
-# 테스트 함수는 test_로 시작해야 pytest가 인식합니다.
 def test_full_diary_lifecycle(client):
     # 테스트에 사용할 유저 정보 (auth 테스트와 동일하게)
     test_user = {
@@ -50,33 +34,37 @@ def test_full_diary_lifecycle(client):
     create_data = {
         "title": "테스트 통합 일기",
         "content": "통합 테스트 내용입니다.",
-        "emotional_state": "happy",
-        # "tags": ["통합", "테스트"], # <-- 이 줄을 제거하거나 주석 처리합니다.
-        # "ai_summary": None,  # <-- 이 줄은 이미 제거된 상태
+
+        "emotional_state": EmotionalState.HAPPY.value,
+        "tags": ["통합", "테스트"],
     }
-    # Authorization 헤더에 Bearer 토큰을 추가합니다.
     headers = {"Authorization": f"Bearer {access_token}"}
     response = client.post("/api/v1/diary/create", json=create_data, headers=headers)
     assert response.status_code == 200
-    assert "id" in response.json()
-    assert response.json()["title"] == create_data["title"]
+    new_diary_json = response.json()
+    diary_id = new_diary_json["id"]
+
+    assert new_diary_json["title"] == create_data["title"]
+    assert new_diary_json["content"] == create_data["content"]
+    assert new_diary_json["emotional_state"] == create_data["emotional_state"]
+    assert sorted(new_diary_json["tags"]) == sorted(create_data["tags"])
 
     # ----------------------------------------------------
     # 단계 2: 모든 일기 조회 (READ ALL)
     # ----------------------------------------------------
-    response = client.get("/api/v1/diary/inquiry")
+    response = client.get("/api/v1/diary/inquiry", headers=headers)
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
-    assert len(response.json()) > 0
+    diaries = response.json()
+    assert len(diaries) > 0
 
     # ----------------------------------------------------
     # 단계 3: 특정 일기 조회 (READ ONE)
     # ----------------------------------------------------
-    response = client.get(f"/api/v1/diary/{diary_id}")
+    response = client.get(f"/api/v1/diary/{diary_id}", headers=headers)
     assert response.status_code == 200
     read_diary = response.json()
     assert read_diary["id"] == diary_id
-    assert read_diary["title"] == "테스트 통합 일기"
+    assert read_diary["title"] == create_data["title"]
 
     # ----------------------------------------------------
     # 단계 4: 일기 수정 (UPDATE)
@@ -84,20 +72,20 @@ def test_full_diary_lifecycle(client):
     update_data = {
         "title": "수정된 제목",
         "content": "내용이 수정되었습니다.",
-        "emotional_state": "calm",
+        "emotional_state": EmotionalState.CALM.value,
     }
-    response = client.put(f"/api/v1/diary/{diary_id}", json=update_data)
+    response = client.put(f"/api/v1/diary/{diary_id}", json=update_data, headers=headers)
     assert response.status_code == 200
     updated_diary = response.json()
     assert updated_diary["title"] == "수정된 제목"
-    assert updated_diary["emotional_state"] == "calm"
+    assert updated_diary["emotional_state"] == EmotionalState.CALM.value
 
     # ----------------------------------------------------
     # 단계 5: 일기 삭제 (DELETE)
     # ----------------------------------------------------
-    response = client.delete(f"/api/v1/diary/{diary_id}")
-    assert response.status_code == 204
+    response = client.delete(f"/api/v1/diary/{diary_id}", headers=headers)
+    assert response.status_code == 204 # <-- 상태 코드 변경
 
     # 삭제 후 다시 조회하여 존재하지 않는지 확인합니다.
-    response = client.get(f"/api/v1/diary/{diary_id}")
-    assert response.status_code == 404  # Not Found
+    response = client.get(f"/api/v1/diary/{diary_id}", headers=headers)
+    assert response.status_code == 404 # Not Found
