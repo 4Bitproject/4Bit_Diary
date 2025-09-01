@@ -24,7 +24,7 @@ async def create_new_diary(
     diary_in: DiaryIn, current_user: User = Depends(get_current_user)
 ):
     # 서비스 함수에 Pydantic 모델과 User 객체를 직접 전달합니다.
-    new_diary = await create_diary_service(current_user, diary_in)
+    new_diary = await create_diary_service(diary_in, current_user)
     return await DiaryOut.from_tortoise_orm(new_diary)
 
 

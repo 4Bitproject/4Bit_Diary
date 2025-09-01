@@ -23,27 +23,40 @@ def client():
 # **3. 통합 테스트 시나리오**
 # 테스트 함수는 test_로 시작해야 pytest가 인식합니다.
 def test_full_diary_lifecycle(client):
-    # 테스트에 사용할 고유한 ID를 저장할 변수
-    global diary_id
+    # 테스트에 사용할 유저 정보 (auth 테스트와 동일하게)
+    test_user = {
+        "email": "test_user@example.com",
+        "password": "testpassword123",
+        "nickname": "TestUserNickname",
+        "name": "Test User",
+    }
+
+    # 회원가입 및 로그인하여 토큰 얻기 (기존 auth 테스트에서 가져옵니다)
+    response = client.post("/api/v1/register", json=test_user)
+    assert response.status_code == 200
+
+    login_data = {"email": test_user["email"], "password": test_user["password"]}
+    response = client.post("/api/v1/login", json=login_data)
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+    access_token = response.json()["access_token"]
 
     # ----------------------------------------------------
-    # 단계 1: 일기 생성 (CREATE)
+    # 단계 1: 일기 생성 (CREATE) - 토큰과 함께 요청
     # ----------------------------------------------------
     create_data = {
         "title": "테스트 통합 일기",
         "content": "통합 테스트 내용입니다.",
         "emotional_state": "happy",
-        "tags": ["통합", "테스트"]
+        # "tags": ["통합", "테스트"], # <-- 이 줄을 제거하거나 주석 처리합니다.
+        # "ai_summary": None,  # <-- 이 줄은 이미 제거된 상태
     }
-    response = client.post("/api/v1/diary/create", json=create_data)
-
+    # Authorization 헤더에 Bearer 토큰을 추가합니다.
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = client.post("/api/v1/diary/create", json=create_data, headers=headers)
     assert response.status_code == 200
-    created_diary = response.json()
-    assert created_diary["title"] == "테스트 통합 일기"
-    assert "id" in created_diary
-
-    # 생성된 일기의 ID를 저장하여 다음 단계에서 사용합니다.
-    diary_id = created_diary["id"]
+    assert "id" in response.json()
+    assert response.json()["title"] == create_data["title"]
 
     # ----------------------------------------------------
     # 단계 2: 모든 일기 조회 (READ ALL)
