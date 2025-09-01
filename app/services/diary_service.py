@@ -5,6 +5,7 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 
 from app.models import User
 from app.models.diary import Diary
+from app.models.tag import Tag
 from app.schemas.diary import DiaryCreate, DiaryUpdate
 from app.models.tag import Tag
 # Pydantic 모델 정의
@@ -24,21 +25,20 @@ async def create_diary_service(user: User, diary_data: DiaryCreate):
             ai_summary=diary_data.ai_summary,  # ai_summary 필드도 추가
         )
 
-        # 2. tags를 처리합니다.
-        # 주어진 태그 이름으로 Tag 인스턴스를 찾거나 새로 생성합니다.
-        tag_objects = []
-        for tag_name in diary_data.tags:
-            tag_obj, created = await Tag.get_or_create(name=tag_name)
-            tag_objects.append(tag_obj)
 
-        # 3. ManyToMany 관계를 설정합니다.
-        await new_diary.tags.add(*tag_objects)
+        # 태그 처리
+        if diary_data.tags:
+            for tag_name in diary_data.tags:
+                # 태그가 없으면 생성, 있으면 가져오기
+                tag, _ = await Tag.get_or_create(name=tag_name)
+                await new_diary.tags.add(tag)
 
-        return new_diary  # <-- 여기서 반환
+        # 태그 관계 포함해서 반환
+        await new_diary.fetch_related("tags")
 
-    except (
-        Exception
-    ) as e:  # <-- 이 부분이 try 블록과 같은 들여쓰기 수준에 있어야 합니다.
+        return new_diary
+    except Exception as e:
+
         print(f"일기 생성 중 오류 발생: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

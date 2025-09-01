@@ -1,12 +1,12 @@
-from typing import List
+from datetime import date
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.v1.auth import get_current_user
 from app.models.diary import Diary_Pydantic as DiaryOut
-from app.models.diary import DiaryIn_Pydantic as DiaryIn
 from app.models.user import User
-from app.schemas.diary import DiaryUpdate
+from app.schemas.diary import DiaryCreate, DiaryUpdate
 from app.services.diary_service import (
     create_diary_service,
     delete_diary_service,
@@ -14,6 +14,7 @@ from app.services.diary_service import (
     get_diary_by_id_service,
     update_diary_service,
 )
+from app.services.search_service import search_diary
 
 router = APIRouter(prefix="/api/v1/diary", tags=["diary"])
 
@@ -21,17 +22,42 @@ router = APIRouter(prefix="/api/v1/diary", tags=["diary"])
 # 일기 생성
 @router.post("/create", response_model=DiaryOut)
 async def create_new_diary(
-    diary_in: DiaryIn, current_user: User = Depends(get_current_user)
+    diary_data: DiaryCreate,  # DiaryIn 대신 DiaryCreate 사용
+    current_user: User = Depends(get_current_user),
 ):
+
     # 서비스 함수에 Pydantic 모델과 User 객체를 직접 전달합니다.
     new_diary = await create_diary_service(diary_in, current_user)
-    return await DiaryOut.from_tortoise_orm(new_diary)
+    
+    return await DiaryOut.from_tortoise_or(new_diary)
 
 
 # 모든 일기 조회
 @router.get("/inquiry", response_model=List[DiaryOut])
 async def get_diaries(current_user: User = Depends(get_current_user)):
     return await get_all_diaries_service(current_user.id)
+
+
+# 일기 검색
+@router.get("/search", response_model=List[DiaryOut])
+async def search_diaries(
+    search_type: str = Query(..., description="검색 타입: title, tag, date"),
+    query: Optional[str] = Query(None, description="검색어 (title, tag 검색 시)"),
+    start_date: Optional[date] = Query(None, description="시작 날짜 (date 검색 시)"),
+    end_date: Optional[date] = Query(
+        None, description="종료 날짜 (date 검색 시, 선택사항)"
+    ),
+    current_user: User = Depends(get_current_user),
+):
+    diaries = await search_diary(
+        user_id=current_user.id,
+        search_type=search_type,
+        query=query,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    return [await DiaryOut.from_tortoise_orm(diary) for diary in diaries]
 
 
 # 특정 일기 조회

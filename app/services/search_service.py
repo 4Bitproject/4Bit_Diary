@@ -1,38 +1,57 @@
-from datetime import datetime
-from typing import Optional
+from datetime import date, datetime
+from typing import List, Optional
 
 from app.models.diary import Diary
-from app.schemas.diary import DiaryOut
 
 
-class SearchService:
-    async def search_diary(
-        self,
-        user_id: int,
-        query: str,
-        search_type: str = "all",
-        target_date: Optional[datetime] = None,
-    ) -> list[DiaryOut]:
-        """
-        일기 검색 (제목, 내용, 태그)
-        """
-        base_query = Diary.filter(user_id=user_id).prefetch_related("tags")
+async def search_diary(
+    user_id: int,
+    search_type: str,
+    query: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+) -> List[Diary]:
+    """
+    일기 검색 (제목,태그,날짜)
+    """
+    base_query = Diary.filter(user_id=user_id).prefetch_related("tags")
 
-        results = []
-
-        if search_type == "title":
-            results = await base_query.filter(title__icontains=query)
-        elif search_type == "content":
-            results = await base_query.filter(content__icontains=query)
-        elif search_type == "tag":
-            results = await base_query.filter(tags__name__icontains=query)
-        elif search_type == "date":
-            if not target_date:
-                return []
-            start_of_day = target_date.replace(hour=0, minute=0, second=0)
-            end_of_day = target_date.replace(hour=23, minute=59, second=59)
-            results = await base_query.filter(
-                created_at__gte=start_of_day, created_at__lte=end_of_day
+    if search_type == "title":
+        if query and query.strip():  # 검색어가 있을 때만 필터링
+            results = await base_query.filter(title__icontains=query).order_by(
+                "-created_at"
             )
+        else:
+            results = await base_query.order_by("-created_at")  # 전체 반환
 
-        return [DiaryOut.model_validate(diary) for diary in results]
+    elif search_type == "tag":
+        if query and query.strip():  # 검색어가 있을 때만 필터링
+            results = (
+                await base_query.filter(tags__name__icontains=query)
+                .distinct()
+                .order_by("-created_at")
+            )
+        else:
+            results = await base_query.order_by("-created_at")  # 전체 반환
+
+    elif search_type == "date":
+        if not start_date:
+            return []
+
+        # 시작 날짜만 있으면 그 날 하루 검색
+        if not end_date:
+            start_datetime = datetime.combine(start_date, datetime.min.time())
+            end_datetime = datetime.combine(start_date, datetime.max.time())
+        else:
+            # 범위 검색
+            start_datetime = datetime.combine(start_date, datetime.min.time())
+            end_datetime = datetime.combine(end_date, datetime.max.time())
+
+        results = await base_query.filter(
+            created_at__gte=start_datetime, created_at__lte=end_datetime
+        ).order_by("-created_at")
+
+    else:
+        return []
+
+    return results
