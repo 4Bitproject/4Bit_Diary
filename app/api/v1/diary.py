@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.v1.auth import get_current_user
 from app.models.user import User
-from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryOut
+from app.schemas.diary import DiaryCreate, DiaryOut, DiaryUpdate
 from app.services.diary_service import (
     create_diary_service,
     delete_diary_service,
@@ -18,6 +18,7 @@ from app.services.search_service import search_diary
 
 router = APIRouter(prefix="/api/v1/diary", tags=["diary"])
 
+
 # 일기 생성
 @router.post("/create", response_model=DiaryOut)
 async def create_new_diary(
@@ -28,10 +29,12 @@ async def create_new_diary(
 
     return DiaryOut.model_validate(new_diary_orm)
 
+
 # 모든 일기 조회
 @router.get("/inquiry", response_model=List[DiaryOut])
 async def get_diaries(current_user: User = Depends(get_current_user)):
     return await get_all_diaries_service(current_user.id)
+
 
 # 일기 검색
 @router.get("/search", response_model=List[DiaryOut])
@@ -54,6 +57,7 @@ async def search_diaries(
 
     return [DiaryOut.model_validate(diary) for diary in diaries]
 
+
 # 특정 일기 조회
 @router.get("/{diary_id}", response_model=DiaryOut)
 async def get_diary(diary_id: int, current_user: User = Depends(get_current_user)):
@@ -61,7 +65,6 @@ async def get_diary(diary_id: int, current_user: User = Depends(get_current_user
     diary_id 를 입력하면 조회해 주는 기능
     """
     return await get_diary_by_id_service(diary_id, current_user.id)
-
 
 
 # 일기 AI 요약 생성
@@ -85,6 +88,7 @@ async def update_diary(
     diary_id: int, data: DiaryUpdate, current_user: User = Depends(get_current_user)
 ):
     return await update_diary_service(diary_id, data, current_user.id)
+
 
 # 일기 삭제
 @router.delete("/{diary_id}")

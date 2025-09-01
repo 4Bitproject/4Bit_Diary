@@ -6,7 +6,11 @@ from typing import Optional
 
 # FastAPI 관련 임포트
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer,
+    OAuth2PasswordBearer,
+)
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from tortoise.exceptions import DoesNotExist
@@ -25,7 +29,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 # OAuth2 스키마 정의 (FastAPI의 Depends에 사용)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
+
+# HTTPBearer 스키마 정의 (Swagger UI의 Authorize 버튼용)
+http_bearer = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
@@ -90,7 +97,10 @@ async def get_user_from_token(token: str) -> Optional[User]:
 
 
 # **새로 추가된 함수**
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+) -> User:
+    token = credentials.credentials
     user = await get_user_from_token(token)
     if not user:
         raise HTTPException(
