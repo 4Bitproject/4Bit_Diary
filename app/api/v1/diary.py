@@ -15,11 +15,11 @@ from app.services.diary_service import (
     update_diary_service,
 )
 
-router = APIRouter(prefix="/api/v1", tags=["diary"])
+router = APIRouter(prefix="/api/v1/diary", tags=["diary"])
 
 
 # 일기 생성
-@router.post("create", response_model=DiaryOut)
+@router.post("/create", response_model=DiaryOut)
 async def create_new_diary(
     diary_in: DiaryIn, current_user: User = Depends(get_current_user)
 ):
@@ -29,7 +29,7 @@ async def create_new_diary(
 
 
 # 모든 일기 조회
-@router.get("inquiry", response_model=List[DiaryOut])
+@router.get("/inquiry", response_model=List[DiaryOut])
 async def get_diaries(current_user: User = Depends(get_current_user)):
     return await get_all_diaries_service(current_user.id)
 
