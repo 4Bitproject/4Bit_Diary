@@ -53,7 +53,6 @@ def test_full_diary_lifecycle(client):
         "emotional_state": "happy",
         # "tags": ["통합", "테스트"], # <-- 이 줄을 제거하거나 주석 처리합니다.
         # "ai_summary": None,  # <-- 이 줄은 이미 제거된 상태
-
     }
     # Authorization 헤더에 Bearer 토큰을 추가합니다.
     headers = {"Authorization": f"Bearer {access_token}"}

@@ -11,13 +11,16 @@ from app.main import app
 def dummy_get_current_user():
     return {"id": 1, "email": "test@test.com"}
 
+
 app.dependency_overrides[get_current_user] = dummy_get_current_user
+
 
 # 2. 테스트 클라이언트 픽스처
 @pytest.fixture(scope="session")
 def client():
     with TestClient(app) as c:
         yield c
+
 
 # 3. 통합 테스트 시나리오
 def test_full_auth_lifecycle(client):
@@ -26,7 +29,7 @@ def test_full_auth_lifecycle(client):
         "email": "test_user@example.com",
         "password": "testpassword123",
         "nickname": "TestUserNickname",
-        "name": "Test User"
+        "name": "Test User",
     }
 
     # ----------------------------------------------------
@@ -40,10 +43,7 @@ def test_full_auth_lifecycle(client):
     # ----------------------------------------------------
     # 단계 2: 로그인 (Login) - 토큰을 얻기 위해 로그인 API를 호출합니다.
     # ----------------------------------------------------
-    login_data = {
-        "email": test_user["email"],
-        "password": test_user["password"]
-    }
+    login_data = {"email": test_user["email"], "password": test_user["password"]}
     response = client.post("/api/v1/login", json=login_data)
     assert response.status_code == 200
     assert "access_token" in response.json()
