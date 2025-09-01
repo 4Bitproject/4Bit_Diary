@@ -26,7 +26,7 @@ from ...utils.security import (
     verify_token,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1", tags=["auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
