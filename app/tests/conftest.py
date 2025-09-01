@@ -1,23 +1,46 @@
-# app/tests/conftest.py
-import os
-
 import pytest
+from tortoise import Tortoise
+
 from fastapi.testclient import TestClient
-from tortoise.contrib.test import finalizer, initializer
 
 from app.main import app
+from app.utils.security import get_current_user
+from app.core.config import TORTOISE_ORM
+
+# 의존성 오버라이드
+def dummy_get_current_user():
+    return {"id": 1}
+
+app.dependency_overrides[get_current_user] = dummy_get_current_user
 
 
-@pytest.fixture(scope="module")
+# 테스트용 DB 초기화 및 스키마 생성 픽스처
+@pytest.fixture(scope="session", autouse=True)
+async def initialize_db():
+    # 실제 프로젝트의 ORM 설정(Tortoise ORM)을 사용합니다.
+    # 단, DB URL은 테스트용 인메모리 SQLite로 변경합니다.
+    test_db_config = {
+        "connections": {
+            "default": "sqlite://:memory:"
+        },
+        "apps": {
+            "models": {
+                "models": TORTOISE_ORM["apps"]["models"]["models"],
+                "default_connection": "default",
+            }
+        },
+    }
+
+    await Tortoise.init(config=test_db_config)
+    await Tortoise.generate_schemas()
+
+    yield
+
+    await Tortoise.close_connections()
+
+
+# 테스트 클라이언트 픽스처
+@pytest.fixture(scope="session")
 def client():
-    # 테스트용 파일 DB
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    db_path = os.path.join(BASE_DIR, "test_db.sqlite3")
-    db_url = f"sqlite:///{db_path}"
-
-    initializer(["app.models.diaries"], db_url=db_url, app_label="models")
     with TestClient(app) as c:
         yield c
-    finalizer()
-    if os.path.exists(db_path):
-        os.remove(db_path)
