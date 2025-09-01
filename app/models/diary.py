@@ -12,12 +12,11 @@ class EmotionalState(str, Enum):
 
 
 class Diary(models.Model):
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
     user = fields.ForeignKeyField("models.User", related_name="diary")
     title = fields.CharField(max_length=100)
     content = fields.TextField()
     emotional_state = fields.CharEnumField(EmotionalState, null=True)
-    ai_summary = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
     tags = fields.ManyToManyField("models.Tag")

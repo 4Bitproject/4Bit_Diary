@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
@@ -20,6 +20,7 @@ from ...services.auth_service import (
     register_user_service,
     update_user_profile_service,
 )
+from app.utils.security import oauth2_scheme
 from ...utils.security import (
     create_access_token,
     get_user_from_token,
@@ -28,7 +29,6 @@ from ...utils.security import (
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 class UpdateProfileRequest(BaseModel):
@@ -166,7 +166,8 @@ async def refresh_token(token: str = Query(...)):
         )
 
 
-async def get_current_user(token: str):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    # token은 "Bearer xxx" 형태가 아닌 순수 토큰 문자열로 전달됨
     user = await get_user_from_token(token)
     if not user:
         raise HTTPException(

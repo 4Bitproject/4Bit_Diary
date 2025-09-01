@@ -4,35 +4,47 @@ from typing import List
 from fastapi import HTTPException, status
 
 from app.models import User
-from app.models.diary import Diary
+from app.models.diary import Diary, EmotionalState
 from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryOut
 from app.models.tag import Tag
-
-from app.schemas.diary import DiaryCreate, DiaryUpdate
 from app.services.ai_service import GeminiService
 
 
 
 async def create_diary_service(user: User, diary_data: DiaryCreate) -> Diary:
     try:
-        # Diary 인스턴스를 먼저 생성합니다.
+        print(f"user 타입: {type(user)}, user: {user}")  # 추가
+        # emotional_state를 Enum으로 변환
+        try:
+            emotional_state = EmotionalState(diary_data.emotional_state)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="유효하지 않은 emotional_state 값입니다.",
+            )
+
+        # Diary 인스턴스 생성
+        print("Diary 생성 시작")  # 추가
         new_diary = await Diary.create(
             user=user,
             title=diary_data.title,
             content=diary_data.content,
-
-            emotional_state=diary_data.emotional_state,  # ai_summary 필드도 추가
+            emotional_state=emotional_state,  # Enum 값 사용
+            ai_summary=diary_data.ai_summary,
         )
+        print(f"Diary 생성 완료: {type(new_diary)}")  # 추가
+
+        # 태그 처리
         if diary_data.tags:
             tag_list = []
             for tag_name in diary_data.tags:
                 tag, _ = await Tag.get_or_create(name=tag_name)
                 tag_list.append(tag)
-            # 생성된 Tag 객체들을 일기에 추가합니다.
             await new_diary.tags.add(*tag_list)
 
-        # 태그 관계를 포함하여 반환
-        return await new_diary.fetch_related("tags")
+        # 태그 관계 포함
+        await new_diary.fetch_related("tags")
+        return new_diary
 
     except Exception as e:
         print(f"일기 생성 중 오류 발생: {e}")
@@ -66,7 +78,8 @@ async def update_diary_service(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="해당 일기를 찾을 수 없거나 권한이 없습니다.",
         )
-    await diary.update_from_dict(diary_data.model_dump(exclude_unset=True)).save()
+    await diary.update_from_dict(diary_data.model_dump(exclude_unset=True))
+    await diary.save()  # diary 객체에서 save() 호출
     return DiaryOut.model_validate(diary)
 
 

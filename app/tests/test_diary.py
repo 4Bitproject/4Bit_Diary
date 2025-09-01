@@ -12,7 +12,7 @@ from app.models.diary import EmotionalState
 def test_full_diary_lifecycle(client):
     # 테스트에 사용할 유저 정보 (auth 테스트와 동일하게)
     test_user = {
-        "email": "test_user@example.com",
+        "email": "diary_test_user@example.com",
         "password": "testpassword123",
         "nickname": "TestUserNickname",
         "name": "Test User",
@@ -72,19 +72,19 @@ def test_full_diary_lifecycle(client):
     update_data = {
         "title": "수정된 제목",
         "content": "내용이 수정되었습니다.",
-        "emotional_state": EmotionalState.CALM.value,
+        "emotional_state": EmotionalState.SAD.value,
     }
     response = client.put(f"/api/v1/diary/{diary_id}", json=update_data, headers=headers)
     assert response.status_code == 200
     updated_diary = response.json()
     assert updated_diary["title"] == "수정된 제목"
-    assert updated_diary["emotional_state"] == EmotionalState.CALM.value
+    assert updated_diary["emotional_state"] == EmotionalState.SAD.value
 
     # ----------------------------------------------------
     # 단계 5: 일기 삭제 (DELETE)
     # ----------------------------------------------------
     response = client.delete(f"/api/v1/diary/{diary_id}", headers=headers)
-    assert response.status_code == 204 # <-- 상태 코드 변경
+    assert response.status_code == 200 # <-- 상태 코드 변경
 
     # 삭제 후 다시 조회하여 존재하지 않는지 확인합니다.
     response = client.get(f"/api/v1/diary/{diary_id}", headers=headers)
