@@ -1,7 +1,7 @@
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6  # ruff의 최신 버전으로 업데이트하는 것을 권장합니다.
+    rev: v0.1.6
     hooks:
       - id: ruff
         args: [--fix]
