@@ -20,6 +20,7 @@ class DiaryCreate(BaseModel):
     tags: Optional[List[str]] = (
         []
     )  # 태그 필드를 추가하여 리스트 형식의 문자열을 허용합니다.
+    ai_summary: Optional[str] = None
 
 
 class DiaryUpdate(BaseModel):
