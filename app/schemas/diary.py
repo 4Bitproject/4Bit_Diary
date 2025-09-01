@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class EmotionalState(str, Enum):
@@ -15,13 +15,9 @@ class EmotionalState(str, Enum):
 class DiaryCreate(BaseModel):
     title: str
     content: str
-
-    emotional_state: str
-    tags: Optional[List[str]] = (
-        []
-    )  # 태그 필드를 추가하여 리스트 형식의 문자열을 허용합니다.
+    emotional_state: EmotionalState  # str -> EmotionalState
+    tags: Optional[List[str]] = []
     ai_summary: Optional[str] = None
-
 
 class DiaryUpdate(BaseModel):
     title: str | None = None
@@ -31,14 +27,30 @@ class DiaryUpdate(BaseModel):
 
 
 class DiaryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     title: str
     content: str
     emotional_state: EmotionalState
     ai_summary: Optional[str] = None
+    tags: List[str] = []
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def extract_tag_names(cls, v):
+        if hasattr(v, "__iter__") and not isinstance(v, str):
+            try:
+                tag_list = list(v)
+                if tag_list and hasattr(tag_list[0], "name"):
+                    return [tag.name for tag in tag_list]
+            except Exception:
+                # fetch_related 안 된 경우 빈 리스트 반환
+                return []
+        return v if isinstance(v, list) else []
 
 
 class DiarySearchParams(BaseModel):

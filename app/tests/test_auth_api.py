@@ -12,7 +12,7 @@ def dummy_get_current_user():
     return {"id": 1, "email": "test@test.com"}
 
 
-app.dependency_overrides[get_current_user] = dummy_get_current_user
+# app.dependency_overrides[get_current_user] = dummy_get_current_user
 
 
 # 2. 테스트 클라이언트 픽스처
