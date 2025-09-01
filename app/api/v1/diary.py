@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 
 from app.api.v1.auth import get_current_user
 from app.models.diary import Diary_Pydantic as DiaryOut
@@ -15,11 +15,11 @@ from app.services.diary_service import (
     update_diary_service,
 )
 
-router = APIRouter(prefix="/api/v1", tags=["diary"])
+router = APIRouter(prefix="/api/v1/diary", tags=["diary"])
 
 
 # 일기 생성
-@router.post("create", response_model=DiaryOut)
+@router.post("/create", response_model=DiaryOut)
 async def create_new_diary(
     diary_in: DiaryIn, current_user: User = Depends(get_current_user)
 ):
@@ -29,7 +29,7 @@ async def create_new_diary(
 
 
 # 모든 일기 조회
-@router.get("inquiry", response_model=List[DiaryOut])
+@router.get("/inquiry", response_model=List[DiaryOut])
 async def get_diaries(current_user: User = Depends(get_current_user)):
     return await get_all_diaries_service(current_user.id)
 
@@ -49,7 +49,7 @@ async def update_diary(
 
 
 # 일기 삭제
-@router.delete("/{diary_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{diary_id}")
 async def delete_diary(diary_id: int, current_user: User = Depends(get_current_user)):
     await delete_diary_service(diary_id, current_user.id)
     return {"message": "일기가 성공적으로 삭제되었습니다."}
