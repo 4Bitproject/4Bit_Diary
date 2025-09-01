@@ -1,34 +1,29 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException, Query, status, Depends
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
+
+from app.utils.security import http_bearer
 
 from ...core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    ALGORITHM,
-    SECRET_KEY,
 )
 from ...models.user import User
 from ...schemas.user import UserIn, UserLogin, UserResponse, UserUpdate
 from ...services.auth_service import (
     delete_user_service,
-    is_token_revoked,
     login_user_service,
     logout_user_service,
     register_user_service,
     update_user_profile_service,
 )
-from app.utils.security import oauth2_scheme
 from ...utils.security import (
     create_access_token,
-    get_user_from_token,
-    verify_token,
+    get_current_user,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
-
 
 
 class UpdateProfileRequest(BaseModel):
@@ -56,46 +51,27 @@ async def login(user_in: UserLogin):
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK, tags=["auth"])
-async def logout(token: str = Query(...)):
-    return await logout_user_service(token)
+async def logout(
+    current_user: User = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+):
+    return await logout_user_service(credentials.credentials)
 
 
 @router.get("/profile", response_model=UserResponse, tags=["auth"])
-async def get_user_profile(token: str = Query(...)):
-    payload = verify_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
-
-    jti = payload.get("jti")
-    if await is_token_revoked(jti):
-        raise HTTPException(status_code=401, detail="로그아웃된 토큰입니다.")
-
-    user = await get_user_from_token(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="인증 실패")
-
+async def get_user_profile(current_user: User = Depends(get_current_user)):
     return {
-        "id": str(user.id),
-        "email": user.email,
-        "created_at": user.created_at.isoformat(),
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "created_at": current_user.created_at.isoformat(),
     }
 
 
 @router.put("/profile", tags=["auth"])
-async def update_profile(request: UpdateProfileRequest, token: str = Query(...)):
-    payload = verify_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
-
-    jti = payload.get("jti")
-    if await is_token_revoked(jti):
-        raise HTTPException(status_code=401, detail="로그아웃된 토큰입니다.")
-
-    user = await get_user_from_token(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="인증 실패")
-
-    result = await update_user_profile_service(user.id, request.new_data)
+async def update_profile(
+    request: UpdateProfileRequest, current_user: User = Depends(get_current_user)
+):
+    result = await update_user_profile_service(current_user.id, request.new_data)
     if "error" in result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"]
@@ -104,20 +80,8 @@ async def update_profile(request: UpdateProfileRequest, token: str = Query(...))
 
 
 @router.delete("/profile", tags=["auth"])
-async def delete_profile(token: str = Query(...)):
-    payload = verify_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
-
-    jti = payload.get("jti")
-    if await is_token_revoked(jti):
-        raise HTTPException(status_code=401, detail="로그아웃된 토큰입니다.")
-
-    user = await get_user_from_token(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="인증 실패")
-
-    result = await delete_user_service(user.id)
+async def delete_profile(current_user: User = Depends(get_current_user)):
+    result = await delete_user_service(current_user.id)
     if "error" in result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"]
@@ -126,51 +90,10 @@ async def delete_profile(token: str = Query(...)):
 
 
 @router.post("/refresh", tags=["auth"])
-async def refresh_token(token: str = Query(...)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        jti = payload.get("jti")
-
-        if not jti or await is_token_revoked(jti):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="이미 로그아웃된 토큰이거나 잘못된 토큰 형식입니다.",
-            )
-
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="유효하지 않은 리프레시 토큰입니다.",
-            )
-
-        user = await User.get_or_none(id=user_id)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="사용자를 찾을 수 없습니다.",
-            )
-
-        new_access_token = create_access_token(
-            data={"sub": str(user.id)},
-            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        )
-
-        return {"access_token": new_access_token, "token_type": "bearer"}
-
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="유효하지 않거나 만료된 리프레시 토큰입니다.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    # token은 "Bearer xxx" 형태가 아닌 순수 토큰 문자열로 전달됨
-    user = await get_user_from_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="인증 실패"
-        )
-    return user
+async def refresh_token(current_user: User = Depends(get_current_user)):
+    # 현재 사용자로부터 새로운 액세스 토큰 생성
+    new_access_token = create_access_token(
+        data={"sub": str(current_user.id)},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    return {"access_token": new_access_token, "token_type": "bearer"}

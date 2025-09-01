@@ -1,0 +1,45 @@
+FastAPI Swagger UI "Authorize" 버튼 수정 사항
+==============================================
+
+문제: Swagger UI에서 "Authorize" 버튼이 나타나지 않음
+
+해결한 부분들:
+
+1. app/main.py
+   - HTTPBearer import 추가
+   - FastAPI 앱에 description, version 추가
+   - security = HTTPBearer() 정의
+
+2. app/utils/security.py
+   - HTTPAuthorizationCredentials import 추가
+   - http_bearer = HTTPBearer() 스키마 추가
+   - get_current_user 함수를 HTTPBearer 사용하도록 수정
+   - credentials.credentials로 토큰 추출하도록 변경
+
+3. app/api/v1/auth.py
+   - HTTPAuthorizationCredentials import 추가
+   - oauth2_scheme 대신 http_bearer 사용
+   - logout 함수에서 credentials로 토큰 받도록 수정
+
+4. pyproject.toml (Tortoise ORM 버전 호환 문제 해결)
+   - tortoise-orm 버전을 ">=0.21.0,<0.22.0"로 고정
+   - aerich 버전을 ">=0.7.2,<0.8.0"로 고정
+   - 버전 호환성 문제로 인한 마이그레이션 오류 해결
+   - 안정적인 버전 범위로 설정하여 의존성 충돌 방지
+
+5. .pre-commit-config.yaml (코드 품질 개선)
+   - black 포맷터 추가 (rev: 25.1.0)
+   - ruff + black 조합으로 코드 스타일 통일
+   - 9개 파일 자동 포맷팅 완료
+
+6. app/tests/test_diary.py (코드 스타일 수정)
+   - import 순서 문제 해결 (E402 에러 수정)
+   - 불필요한 sys.path 조작 제거
+   - 깔끔한 import 구조로 변경
+
+결과:
+- 이제 Swagger UI (/docs)에서 "Authorize" 버튼이 나타남
+- 토큰 입력 시 "Bearer " 없이 토큰만 입력하면 됨
+- HTTPBearer가 자동으로 Bearer 토큰 형식 처리
+- Tortoise ORM과 Aerich 버전 호환성 문제 해결
+- pre-commit 검사 모두 통과 (ruff + black)

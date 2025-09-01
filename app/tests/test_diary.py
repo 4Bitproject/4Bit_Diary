@@ -1,13 +1,5 @@
-import sys
-import os
-
-# 현재 스크립트의 상위 디렉토리(app/)를 PYTHONPATH에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# 프로젝트 루트 디렉토리(4Bit_Diary/)를 PYTHONPATH에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-
-from app.main import app
 from app.models.diary import EmotionalState
+
 
 def test_full_diary_lifecycle(client):
     # 테스트에 사용할 유저 정보 (auth 테스트와 동일하게)
@@ -34,7 +26,6 @@ def test_full_diary_lifecycle(client):
     create_data = {
         "title": "테스트 통합 일기",
         "content": "통합 테스트 내용입니다.",
-
         "emotional_state": EmotionalState.HAPPY.value,
         "tags": ["통합", "테스트"],
     }
@@ -74,7 +65,9 @@ def test_full_diary_lifecycle(client):
         "content": "내용이 수정되었습니다.",
         "emotional_state": EmotionalState.SAD.value,
     }
-    response = client.put(f"/api/v1/diary/{diary_id}", json=update_data, headers=headers)
+    response = client.put(
+        f"/api/v1/diary/{diary_id}", json=update_data, headers=headers
+    )
     assert response.status_code == 200
     updated_diary = response.json()
     assert updated_diary["title"] == "수정된 제목"
@@ -84,8 +77,8 @@ def test_full_diary_lifecycle(client):
     # 단계 5: 일기 삭제 (DELETE)
     # ----------------------------------------------------
     response = client.delete(f"/api/v1/diary/{diary_id}", headers=headers)
-    assert response.status_code == 200 # <-- 상태 코드 변경
+    assert response.status_code == 200  # <-- 상태 코드 변경
 
     # 삭제 후 다시 조회하여 존재하지 않는지 확인합니다.
     response = client.get(f"/api/v1/diary/{diary_id}", headers=headers)
-    assert response.status_code == 404 # Not Found
+    assert response.status_code == 404  # Not Found
