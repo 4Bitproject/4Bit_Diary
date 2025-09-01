@@ -21,11 +21,13 @@ FastAPI Swagger UI "Authorize" 버튼 수정 사항
    - oauth2_scheme 대신 http_bearer 사용
    - logout 함수에서 credentials로 토큰 받도록 수정
 
-4. pyproject.toml (Tortoise ORM 버전 호환 문제 해결)
+4. pyproject.toml (의존성 문제 해결)
    - tortoise-orm 버전을 ">=0.21.0,<0.22.0"로 고정
    - aerich 버전을 ">=0.7.2,<0.8.0"로 고정
+   - python-jose[cryptography]>=3.3.0 추가 (JWT 토큰 처리용)
+   - passlib[bcrypt]>=1.7.4 추가 (비밀번호 해싱용)
    - 버전 호환성 문제로 인한 마이그레이션 오류 해결
-   - 안정적인 버전 범위로 설정하여 의존성 충돌 방지
+   - CI 환경에서 "No module named 'jose'" 에러 해결
 
 5. .pre-commit-config.yaml (코드 품질 개선)
    - black 포맷터 추가 (rev: 25.1.0)
@@ -37,9 +39,17 @@ FastAPI Swagger UI "Authorize" 버튼 수정 사항
    - 불필요한 sys.path 조작 제거
    - 깔끔한 import 구조로 변경
 
+7. uv.lock (의존성 락 파일 업데이트)
+   - python-jose v3.5.0 추가
+   - passlib v1.7.4 추가
+   - ecdsa v0.19.1, six v1.17.0 의존성 추가
+   - CI 환경과 로컬 환경 의존성 동기화
+
 결과:
 - 이제 Swagger UI (/docs)에서 "Authorize" 버튼이 나타남
 - 토큰 입력 시 "Bearer " 없이 토큰만 입력하면 됨
 - HTTPBearer가 자동으로 Bearer 토큰 형식 처리
 - Tortoise ORM과 Aerich 버전 호환성 문제 해결
+- JWT 인증 관련 의존성 문제 해결 (jose, passlib 추가)
 - pre-commit 검사 모두 통과 (ruff + black)
+- CI 환경에서 빌드 오류 없이 통과 가능
