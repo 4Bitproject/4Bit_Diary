@@ -8,6 +8,10 @@ from app.models.diary import Diary
 from app.schemas.diary import DiaryCreate, DiaryUpdate, DiaryOut
 from app.models.tag import Tag
 
+from app.schemas.diary import DiaryCreate, DiaryUpdate
+from app.services.ai_service import GeminiService
+
+
 
 async def create_diary_service(user: User, diary_data: DiaryCreate) -> Diary:
     try:
@@ -16,11 +20,9 @@ async def create_diary_service(user: User, diary_data: DiaryCreate) -> Diary:
             user=user,
             title=diary_data.title,
             content=diary_data.content,
-            emotional_state=diary_data.emotional_state,
-            ai_summary=diary_data.ai_summary,
-        )
 
-        # 태그가 있으면 태그를 처리합니다.
+            emotional_state=diary_data.emotional_state,  # ai_summary 필드도 추가
+        )
         if diary_data.tags:
             tag_list = []
             for tag_name in diary_data.tags:
@@ -66,6 +68,43 @@ async def update_diary_service(
         )
     await diary.update_from_dict(diary_data.model_dump(exclude_unset=True)).save()
     return DiaryOut.model_validate(diary)
+
+
+async def summarize_diary_service(diary_id: int, user_id: int) -> Diary:
+    """
+    일기 AI 요약 서비스
+    """
+    # 일기 조회 및 권한 확인
+    diary = await Diary.filter(id=diary_id, user_id=user_id).first()
+
+    if not diary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="일기를 찾을 수 없습니다."
+        )
+
+    # 이미 요약이 있는 경우 확인
+    if diary.ai_summary:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="이미 요약이 존재합니다."
+        )
+
+    try:
+        # Gemini 서비스로 요약 생성
+        gemini_service = GeminiService()
+        summary = await gemini_service.summarize_diary(diary.content)
+
+        # 요약 저장
+        diary.ai_summary = summary
+        await diary.save()
+
+        return diary
+
+    except Exception as e:
+        print(f"요약 생성 중 오류: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="AI 요약 생성에 실패했습니다.",
+        )
 
 
 async def delete_diary_service(diary_id: int, user_id: int):

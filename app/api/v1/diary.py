@@ -11,6 +11,7 @@ from app.services.diary_service import (
     delete_diary_service,
     get_all_diaries_service,
     get_diary_by_id_service,
+    summarize_diary_service,
     update_diary_service,
 )
 from app.services.search_service import search_diary
@@ -56,7 +57,27 @@ async def search_diaries(
 # 특정 일기 조회
 @router.get("/{diary_id}", response_model=DiaryOut)
 async def get_diary(diary_id: int, current_user: User = Depends(get_current_user)):
+    """
+    diary_id 를 입력하면 조회해 주는 기능
+    """
     return await get_diary_by_id_service(diary_id, current_user.id)
+
+
+
+# 일기 AI 요약 생성
+@router.post("/{diary_id}/summarize", response_model=DiaryOut)
+async def summarize_diary(
+    diary_id: int, current_user: User = Depends(get_current_user)
+):
+    """
+    일기 AI 요약 생성
+
+    - 일기 내용을 AI로 분석하여 2-3문장으로 요약
+    - 이미 요약이 있는 경우 400 에러 반환
+    """
+    diary = await summarize_diary_service(diary_id, current_user.id)
+    return await DiaryOut.from_tortoise_orm(diary)
+
 
 # 일기 수정
 @router.put("/{diary_id}", response_model=DiaryOut)

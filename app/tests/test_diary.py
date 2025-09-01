@@ -34,6 +34,7 @@ def test_full_diary_lifecycle(client):
     create_data = {
         "title": "테스트 통합 일기",
         "content": "통합 테스트 내용입니다.",
+
         "emotional_state": EmotionalState.HAPPY.value,
         "tags": ["통합", "테스트"],
     }

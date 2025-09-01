@@ -11,7 +11,7 @@ from ...core.config import (
     SECRET_KEY,
 )
 from ...models.user import User
-from ...schemas.user import UserIn, UserLogin, UserUpdate, UserResponse
+from ...schemas.user import UserIn, UserLogin, UserResponse, UserUpdate
 from ...services.auth_service import (
     delete_user_service,
     is_token_revoked,
