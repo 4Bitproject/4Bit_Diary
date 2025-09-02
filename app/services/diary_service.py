@@ -81,7 +81,9 @@ async def update_diary_service(
 
     # tags와 emotional_state를 제외한 나머지 필드 업데이트
     # M2M 관계인 tags는 update_from_dict로 업데이트할 수 없음
-    update_data = diary_data.model_dump(exclude_unset=True, exclude={"tags", "emotional_state"})
+    update_data = diary_data.model_dump(
+        exclude_unset=True, exclude={"tags", "emotional_state"}
+    )
     await diary.update_from_dict(update_data)
 
     # emotional_state 업데이트 (선택적)

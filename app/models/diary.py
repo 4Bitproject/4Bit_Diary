@@ -21,6 +21,7 @@ class Diary(models.Model):
     tags = fields.ManyToManyField("models.Tag")
     # ai_summary = fields.TextField()
 
+
 class DiaryTag(models.Model):
     diary = fields.ForeignKeyField("models.Diary", related_name="diary_tags")
     tag = fields.ForeignKeyField("models.Tag", related_name="diary_tags")
