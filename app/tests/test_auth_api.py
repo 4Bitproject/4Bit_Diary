@@ -1,7 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.v1.auth import get_current_user
 from app.main import app
 
 
@@ -52,29 +51,28 @@ def test_full_auth_lifecycle(client):
     # ----------------------------------------------------
     # 단계 3: 프로필 조회 (Get User Profile)
     # ----------------------------------------------------
-    # 헤더 대신 쿼리 파라미터로 토큰을 전달합니다.
-    response = client.get(
-        f"/api/v1/profile?token={access_token}"
-    )  # URL에 직접 토큰을 추가
+    # Authorization 헤더로 토큰을 전달합니다.
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = client.get("/api/v1/profile", headers=headers)
     assert response.status_code == 200
     assert response.json()["email"] == test_user["email"]
 
     # ----------------------------------------------------
     # 단계 4: 프로필 수정 (Update User Profile)
     # ----------------------------------------------------
-    # PUT/DELETE는 여전히 쿼리 파라미터로 토큰을 받습니다.
+    # Authorization 헤더로 토큰을 전달합니다.
     update_data = {
         "new_data": {  # <-- 'new_data' 키를 추가합니다.
             "email": "updated_user@example.com"
         }
     }
-    response = client.put(f"/api/v1/profile?token={access_token}", json=update_data)
+    response = client.put("/api/v1/profile", json=update_data, headers=headers)
     assert response.status_code == 200
 
     # ----------------------------------------------------
     # 단계 5: 프로필 삭제 (Delete User Profile)
     # ----------------------------------------------------
-    response = client.delete(f"/api/v1/profile?token={access_token}")
+    response = client.delete("/api/v1/profile", headers=headers)
     assert response.status_code == 200  # <-- 204 대신 200으로 변경
     # 삭제 메시지가 있다면 메시지 검증 추가
     # assert "message" in response.json()
@@ -82,5 +80,5 @@ def test_full_auth_lifecycle(client):
     # ----------------------------------------------------
     # 단계 6: 삭제된 프로필 조회 시도
     # ----------------------------------------------------
-    response = client.get(f"/api/v1/profile?token={access_token}")
+    response = client.get("/api/v1/profile", headers=headers)
     assert response.status_code == 401

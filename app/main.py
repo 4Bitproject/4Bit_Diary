@@ -1,6 +1,7 @@
 # app/main.py
 
 from fastapi import FastAPI
+from fastapi.security import HTTPBearer
 from tortoise.contrib.fastapi import register_tortoise
 
 # 라우터 파일에서 라우터를 직접 임포트합니다.
@@ -8,7 +9,14 @@ from .api.v1.auth import router as auth_router
 from .api.v1.diary import router as diary_router
 from .core.config import TORTOISE_ORM
 
-app = FastAPI(title="4Bit_Diary API")
+# HTTPBearer 보안 스키마 정의
+security = HTTPBearer()
+
+app = FastAPI(
+    title="4Bit_Diary API",
+    description="4Bit Diary API with JWT Authentication",
+    version="1.0.0",
+)
 
 register_tortoise(
     app,

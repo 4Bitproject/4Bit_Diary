@@ -19,6 +19,7 @@ class DiaryCreate(BaseModel):
     tags: Optional[List[str]] = []
     ai_summary: Optional[str] = None
 
+
 class DiaryUpdate(BaseModel):
     title: str | None = None
     content: str | None = None
