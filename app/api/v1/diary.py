@@ -79,7 +79,7 @@ async def summarize_diary(
     - 이미 요약이 있는 경우 400 에러 반환
     """
     diary = await summarize_diary_service(diary_id, current_user.id)
-    return await DiaryOut.from_tortoise_orm(diary)
+    return DiaryOut.model_validate(diary)
 
 
 # 일기 수정

@@ -19,7 +19,7 @@ class Diary(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
     tags = fields.ManyToManyField("models.Tag")
-
+    # ai_summary = fields.TextField()
 
 class DiaryTag(models.Model):
     diary = fields.ForeignKeyField("models.Diary", related_name="diary_tags")
