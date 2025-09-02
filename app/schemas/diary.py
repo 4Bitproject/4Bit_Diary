@@ -17,7 +17,7 @@ class DiaryCreate(BaseModel):
     content: str
     emotional_state: EmotionalState  # str -> EmotionalState
     tags: Optional[List[str]] = []
-    ai_summary: Optional[str] = None
+    # ai_summary: Optional[str] = None
 
 
 class DiaryUpdate(BaseModel):
@@ -39,6 +39,10 @@ class DiaryOut(BaseModel):
     tags: List[str] = []
     created_at: datetime
     updated_at: datetime
+
+    @classmethod
+    async def from_tortoise_orm(cls, obj):
+        return cls.model_validate(obj)
 
     @field_validator("tags", mode="before")
     @classmethod

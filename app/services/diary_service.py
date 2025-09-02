@@ -30,7 +30,7 @@ async def create_diary_service(user: User, diary_data: DiaryCreate) -> Diary:
             title=diary_data.title,
             content=diary_data.content,
             emotional_state=emotional_state,  # Enum 값 사용
-            ai_summary=diary_data.ai_summary,
+            # ai_summary=diary_data.ai_summary,
         )
         print(f"Diary 생성 완료: {type(new_diary)}")  # 추가
 
@@ -78,8 +78,40 @@ async def update_diary_service(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="해당 일기를 찾을 수 없거나 권한이 없습니다.",
         )
-    await diary.update_from_dict(diary_data.model_dump(exclude_unset=True))
-    await diary.save()  # diary 객체에서 save() 호출
+
+    # tags와 emotional_state를 제외한 나머지 필드 업데이트
+    # M2M 관계인 tags는 update_from_dict로 업데이트할 수 없음
+    update_data = diary_data.model_dump(
+        exclude_unset=True, exclude={"tags", "emotional_state"}
+    )
+    await diary.update_from_dict(update_data)
+
+    # emotional_state 업데이트 (선택적)
+    if diary_data.emotional_state:
+        try:
+            emotional_state = EmotionalState(diary_data.emotional_state)
+            diary.emotional_state = emotional_state
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="유효하지 않은 emotional_state 값입니다.",
+            )
+
+    # tags 업데이트 (M2M 매니저 사용)
+    if diary_data.tags is not None:
+        # 기존 태그 관계 삭제
+        await diary.tags.clear()
+
+        if diary_data.tags:
+            tag_list = []
+            for tag_name in diary_data.tags:
+                tag, _ = await Tag.get_or_create(name=tag_name)
+                tag_list.append(tag)
+            await diary.tags.add(*tag_list)
+
+    await diary.save()
+    await diary.fetch_related("tags")
+
     return DiaryOut.model_validate(diary)
 
 
@@ -96,10 +128,10 @@ async def summarize_diary_service(diary_id: int, user_id: int) -> Diary:
         )
 
     # 이미 요약이 있는 경우 확인
-    if diary.ai_summary:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="이미 요약이 존재합니다."
-        )
+    # if diary.ai_summary:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST, detail="이미 요약이 존재합니다."
+    #     )
 
     try:
         # Gemini 서비스로 요약 생성
