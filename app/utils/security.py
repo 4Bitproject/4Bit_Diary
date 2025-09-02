@@ -1,17 +1,38 @@
 # app/utils/security.py
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Optional
 
+# FastAPI 관련 임포트
+from fastapi import Depends, HTTPException, status
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer,
+    OAuth2PasswordBearer,
+)
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from tortoise.exceptions import DoesNotExist
 
-from ..core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
+# .env 파일 등에서 SECRET_KEY와 만료 시간을 가져옵니다.
+from ..core.config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    ALGORITHM,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+    SECRET_KEY,
+)
 from ..models import User
+from ..models.token_blacklist import TokenBlacklist
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+# OAuth2 스키마 정의 (FastAPI의 Depends에 사용)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
+
+# HTTPBearer 스키마 정의 (Swagger UI의 Authorize 버튼용)
+http_bearer = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
@@ -25,14 +46,26 @@ def verify_password(password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire, "jti": str(uuid.uuid4())})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
+def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(UTC) + expires_delta
+    else:
+        expire = datetime.now(UTC) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire, "jti": str(uuid.uuid4())})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+# 모든 토큰의 유효성을 검증하는 단일 함수
 def verify_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -41,9 +74,15 @@ def verify_token(token: str) -> Optional[dict]:
         return None
 
 
+# 토큰의 유효성을 검사하고, 블랙리스트를 확인한 후 사용자 정보를 반환합니다.
 async def get_user_from_token(token: str) -> Optional[User]:
     payload = verify_token(token)
     if payload is None:
+        return None
+
+    # 블랙리스트에 등록된 토큰인지 확인
+    jti = payload.get("jti")
+    if jti is None or await TokenBlacklist.get_or_none(jti=jti):
         return None
 
     user_id = payload.get("sub")
@@ -55,3 +94,18 @@ async def get_user_from_token(token: str) -> Optional[User]:
         return user
     except DoesNotExist:
         return None
+
+
+# **새로 추가된 함수**
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+) -> User:
+    token = credentials.credentials
+    user = await get_user_from_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="유효하지 않은 인증 토큰입니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user

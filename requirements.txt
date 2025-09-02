@@ -42,7 +42,6 @@ nodeenv==1.9.1
 packaging==25.0
 passlib==1.7.4
 pathspec==0.12.1
-pip @ file:///Applications/PyCharm.app/Contents/plugins/python-ce/helpers/pip-24.3.1-py2.py3-none-any.whl
 platformdirs==4.3.8
 pre-commit==4.3.0
 pwdlib==0.2.1
@@ -74,3 +73,8 @@ uvloop==0.21.0
 virtualenv==20.34.0
 watchfiles==1.1.0
 websockets==15.0.1
+
+pydantic[email]
+
+# ai 서비스
+google-generativeai
